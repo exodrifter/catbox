@@ -3,57 +3,64 @@ module Catbox.Internal.Types
 , graphCodec
 
 -- Parts of the graph
-, Parameter(parameterName, parameterType)
-, Node(nodeId, nodeFunction, nodeParameters, nodeConnections)
-, Return(returnName, returnConnection)
+, Input(inputName, inputType)
+, Node(nodeId, nodeFunction, nodeParameters)
+, Output(outputName, outputParameter)
+, Parameter(..)
 
 -- Primitive types used by the graph
 , Results(..)
 , Key(..)
 , Value(..)
-, CatboxFile(..)
+, File(..)
 ) where
 
 import Text.Pandoc (Pandoc)
 import Toml (TomlCodec, (.=))
+import qualified Data.Aeson as Aeson
+import qualified Data.Aeson.Text as Aeson
+import qualified Data.ByteString.Lazy as BSL
+import qualified Data.Text as T
+import qualified Data.Text.Lazy as TL
+import qualified Data.Text.Lazy.Builder as TL
+import qualified Data.Text.Encoding as TE
 import qualified Toml
 
 data Graph =
   Graph
-    { graphInputs :: [Parameter]
+    { graphInputs :: [Input]
     , graphNodes :: [Node]
-    , graphOutputs :: [Return]
+    , graphOutputs :: [Output]
     }
 
 graphCodec :: TomlCodec Graph
 graphCodec =
   Graph
-    <$> Toml.list parameterCodec "in" .= graphInputs
+    <$> Toml.list inputCodec "in" .= graphInputs
     <*> Toml.list nodeCodec "nodes" .= graphNodes
-    <*> Toml.list returnCodec "out" .= graphOutputs
+    <*> Toml.list outputCodec "out" .= graphOutputs
 
 -------------------------------------------------------------------------------
 -- Graph Parts
 -------------------------------------------------------------------------------
 
-data Parameter =
-  Parameter
-    { parameterName :: Text
-    , parameterType :: Text
+data Input =
+  Input
+    { inputName :: Text
+    , inputType :: Text
     }
 
-parameterCodec :: TomlCodec Parameter
-parameterCodec =
-  Parameter
-    <$> Toml.text "name" .= parameterName
-    <*> Toml.text "type" .= parameterType
+inputCodec :: TomlCodec Input
+inputCodec =
+  Input
+    <$> Toml.text "name" .= inputName
+    <*> Toml.text "type" .= inputType
 
 data Node =
   Node
     { nodeId :: Text
     , nodeFunction :: Text
-    , nodeParameters :: [Text]
-    , nodeConnections :: [Key]
+    , nodeParameters :: [Parameter]
     }
 
 nodeCodec :: TomlCodec Node
@@ -61,20 +68,36 @@ nodeCodec =
   Node
     <$> Toml.text "id" .= nodeId
     <*> Toml.text "function" .= nodeFunction
-    <*> Toml.arrayOf Toml._Text "parameters" .= nodeParameters
-    <*> Toml.arrayOf (Toml._Coerce Toml._Text) "in" .= nodeConnections
+    <*> Toml.list parameterCodec "parameters" .= nodeParameters
 
-data Return =
-  Return
-    { returnName :: Text
-    , returnConnection :: Key
+data Parameter =
+    Connection Key
+  | Constant Value
+
+parameterCodec :: TomlCodec Parameter
+parameterCodec =
+  let
+    matchConnection (Connection key) = Just key
+    matchConnection _ = Nothing
+
+    matchConstant (Constant value) = Just value
+    matchConstant _ = Nothing
+
+  in    Toml.dimatch matchConstant Constant valueCodec
+    <|> Toml.dimatch matchConnection Connection
+          (Toml.textBy keyToText (Right . Key) "key")
+
+data Output =
+  Output
+    { outputName :: Text
+    , outputParameter :: Parameter
     }
 
-returnCodec :: TomlCodec Return
-returnCodec =
-  Return
-    <$> Toml.text "name" .= returnName
-    <*> (Key <$> Toml.text "from" .= (keyToText . returnConnection))
+outputCodec :: TomlCodec Output
+outputCodec =
+  Output
+    <$> Toml.text "name" .= outputName
+    <*> parameterCodec .= outputParameter
 
 -------------------------------------------------------------------------------
 -- Graph Primitive Types
@@ -89,15 +112,52 @@ newtype Key = Key { keyToText :: Text }
 
 -- The different kinds of values you can pass in catbox.
 data Value =
-    CText Text
+    CFile File
   | CFilePath FilePath
-  | CFile CatboxFile
   | CPandoc Pandoc
+  | CText Text
   deriving (Eq, Show)
 
-data CatboxFile =
-  CatboxFile
+valueCodec :: TomlCodec Value
+valueCodec =
+  let
+    matchCFile (CFile v) = Just v
+    matchCFile _ = Nothing
+
+    matchCFilePath (CFilePath v) = Just v
+    matchCFilePath _ = Nothing
+
+    matchCPandoc (CPandoc v) = Just v
+    matchCPandoc _ = Nothing
+
+    matchCText (CText v) = Just v
+    matchCText _ = Nothing
+
+  in    Toml.dimatch matchCFile CFile (Toml.table fileCodec "file")
+    <|> Toml.dimatch matchCFilePath CFilePath (Toml.string "file_path")
+    <|> Toml.dimatch matchCPandoc CPandoc pandocCodec
+    <|> Toml.dimatch matchCText CText (Toml.text "text")
+
+pandocCodec :: TomlCodec Pandoc
+pandocCodec =
+  let
+    toText pandoc = TL.toStrict (TL.toLazyText (Aeson.encodeToTextBuilder pandoc))
+    fromText text =
+      case Aeson.eitherDecode (BSL.fromStrict (TE.encodeUtf8 text)) of
+        Left err -> Left (T.pack err)
+        Right pandoc -> Right pandoc
+  in
+    Toml.textBy toText fromText "pandoc"
+
+data File =
+  File
     { filePath :: FilePath
     , fileText :: Text
     }
   deriving (Eq, Show)
+
+fileCodec :: TomlCodec File
+fileCodec =
+  File
+    <$> Toml.string "path" .= filePath
+    <*> Toml.text "text" .= fileText

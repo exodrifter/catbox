@@ -35,8 +35,8 @@ main = do
     -- Read input
     Right graph -> do
       let
-        params = graphInputs graph
-        graphOpts = info (catboxParser <**> parametersParser params <**> helper) fullDesc
+        inputs = graphInputs graph
+        graphOpts = info (catboxParser <**> inputsParser inputs <**> helper) fullDesc
       rawInputs <- execParser graphOpts
 
       -- Read the files
@@ -44,9 +44,11 @@ main = do
         loadFile :: Results -> (Key, Value) -> IO Results
         loadFile results (key, value) =
           case value of
-            CFile (CatboxFile path _) -> do
+            CFile (File path _) -> do
               text <- TIO.readFile (FilePath.combine inputDirectory path)
-              pure (Map.insert key (CFile (CatboxFile path text)) results)
+              pure (Map.insert key (CFile (File path text)) results)
+            CFilePath _ -> pure results
+            CPandoc _ -> pure results
             CText _ -> pure results
       inputs <- foldlM loadFile rawInputs (Map.toList rawInputs)
 
@@ -60,40 +62,39 @@ main = do
           processResults outputDirectory newValues (graphOutputs graph)
 
 -- Write results to disk and buffer only if all outputs are available.
-processResults :: FilePath -> Results -> [Return] -> IO ()
-processResults outputDirectory results returns = do
+processResults :: FilePath -> Results -> [Output] -> IO ()
+processResults outputDirectory results outputs = do
   let
-    loadResult return =
-      maybe
-        (Left (returnConnection return))
-        (\v -> Right (return, v))
-        (Map.lookup (returnConnection return) results)
+    loadResult :: Output -> Either Text (Output, Value)
+    loadResult output =
+      (\v -> (output, v)) <$>
+        (evalCatbox (resolveParameter (outputParameter output)) results)
 
-  case collectEithers (loadResult <$> returns) of
+  case collectEithers (loadResult <$> outputs) of
 
     -- Some results are missing!
-    Left failedReturns -> do
+    Left failedOutputs -> do
       TIO.putStrLn $
            "Could not find results for: "
-        <> T.intercalate ", " (keyToText <$> failedReturns)
+        <> T.intercalate ", " (T.pack . show <$> failedOutputs)
 
     -- All of the results are available, print/write the results
     Right successfulReturns -> do
       TIO.putStrLn "SUCCESS!"
       traverse_ (processResult outputDirectory) successfulReturns
 
-processResult :: FilePath -> (Return, Value) -> IO ()
-processResult outputDirectory (return, value) = do
+processResult :: FilePath -> (Output, Value) -> IO ()
+processResult outputDirectory (output, value) = do
   let
     printDebug value =
-      TIO.putStrLn (returnName return <> " = " <> T.pack (show value))
+      TIO.putStrLn (outputName output <> " = " <> T.pack (show value))
 
   case value of
     CText value -> printDebug value
     CFilePath value -> printDebug value
     CPandoc value -> printDebug value
 
-    CFile (CatboxFile path text) -> do
+    CFile (File path text) -> do
       let
         outputPath = FilePath.combine outputDirectory path
       Directory.createDirectoryIfMissing
@@ -128,32 +129,32 @@ catboxParser = do
          <> help "The path to the output directory." )
   pure (graphPath, inputPath, outputPath)
 
-parametersParser :: [Parameter] -> Parser ((FilePath, FilePath, FilePath) -> Results)
-parametersParser param = do
-  results <- traverse parameterParser param
+inputsParser :: [Input] -> Parser ((FilePath, FilePath, FilePath) -> Results)
+inputsParser inputs = do
+  results <- traverse inputParser inputs
   pure (const $ Map.unions results)
 
-parameterParser :: Parameter -> Parser Results
-parameterParser param =
-  case parameterType param of
+inputParser :: Input -> Parser Results
+inputParser input =
+  case inputType input of
     "text" -> do
       value <- strOption
-          ( long (T.unpack (parameterName param))
+          ( long (T.unpack (inputName input))
          <> metavar "VALUE"
          <> help "string value" )
       pure $
         Map.singleton
-          (Key ("in." <> parameterName param))
+          (Key ("in." <> inputName input))
           (CText value)
     "file" -> do
       path <- strOption
-          ( long (T.unpack (parameterName param))
+          ( long (T.unpack (inputName input))
          <> metavar "VALUE"
          <> help "path" )
       pure $
         Map.singleton
-          (Key ("in." <> parameterName param))
-          (CFile (CatboxFile path "")) -- Read the file later
+          (Key ("in." <> inputName input))
+          (CFile (File path "")) -- Read the file later
 
 -------------------------------------------------------------------------------
 -- Program functions
@@ -163,15 +164,18 @@ parameterParser param =
 -- it fails to do so.
 processNodes :: [Node] -> Catbox (Either [Text] ())
 processNodes nodes = do
-  let
-    hasInput :: Results -> Node -> Bool
-    hasInput values node =
-      List.all
-        (\key -> Map.member key values)
-        (nodeConnections node)
-
   values <- get
-  case List.partition (hasInput values) nodes of
+  let
+    hasInputs :: Node -> Bool
+    hasInputs node =
+      List.all hasInput (nodeParameters node)
+    hasInput :: Parameter -> Bool
+    hasInput parameter =
+      case parameter of
+        Constant _ -> True
+        Connection key -> Map.member key values
+
+  case List.partition hasInputs nodes of
 
     -- All of the nodes have been processed, so there isn't anything to do.
     ([], []) ->
@@ -191,7 +195,7 @@ processNodes nodes = do
 
 processNode :: Node -> Catbox (Either [Text] ())
 processNode node = do
-  results <- lookupResults (nodeConnections node)
+  results <- resolveParameters (nodeParameters node)
   case results of
 
     -- We failed to find all of the inputs required for this node.
@@ -200,9 +204,9 @@ processNode node = do
 
     -- We found all the required inputs, lets run the function now!
     Right args ->
-      case (nodeFunction node, nodeParameters node, args) of
+      case (nodeFunction node, args) of
 
-        ("parse_markdown", [], (CText a):[]) -> do
+        ("parse_markdown", (CText a):[]) -> do
           results <- get
           let pandocResult =
                   runIdentity
@@ -220,10 +224,10 @@ processNode node = do
                   (CPandoc pandoc)
                   results
               pure (Right ())
-        ("parse_markdown", _, arr) ->
+        ("parse_markdown", arr) ->
           pure (Left ["Wrong number of arguments for parse_markdown: " <> T.pack (show (length arr))])
 
-        ("render_html5", [], (CPandoc pandoc):[]) -> do
+        ("render_html5", (CPandoc pandoc):[]) -> do
           results <- get
           let pandocResult =
                   runIdentity
@@ -241,10 +245,10 @@ processNode node = do
                   (CText (TL.toStrict (Blaze.renderHtml html)))
                   results
               pure (Right ())
-        ("render_html5", _, arr) ->
+        ("render_html5", arr) ->
           pure (Left ["Wrong number of arguments for render_html5: " <> T.pack (show (length arr))])
 
-        ("uppercase", [], (CText a):[]) -> do
+        ("uppercase", (CText a):[]) -> do
           results <- get
           put $
             Map.insert
@@ -252,10 +256,10 @@ processNode node = do
               (CText (T.toUpper a))
               results
           pure (Right ())
-        ("uppercase", _, arr) ->
+        ("uppercase", arr) ->
           pure (Left ["Wrong number of arguments for uppercase: " <> T.pack (show (length arr))])
 
-        ("lowercase", [], (CText a):[]) -> do
+        ("lowercase", (CText a):[]) -> do
           results <- get
           put $
             Map.insert
@@ -263,10 +267,10 @@ processNode node = do
               (CText (T.toLower a))
               results
           pure (Right ())
-        ("lowercase", _, arr) ->
+        ("lowercase", arr) ->
           pure (Left ["Wrong number of arguments for lowercase: " <> T.pack (show (length arr))])
 
-        ("concat", [], (CText a):(CText b):[]) -> do
+        ("concat", (CText a):(CText b):[]) -> do
           results <- get
           put $
             Map.insert
@@ -274,10 +278,10 @@ processNode node = do
               (CText (a <> b))
               results
           pure (Right ())
-        ("concat", _, arr) ->
+        ("concat", arr) ->
           pure (Left ["Wrong number of arguments for concat: " <> T.pack (show (length arr))])
 
-        ("read_file", [], (CFile file):[]) -> do
+        ("read_file", (CFile file):[]) -> do
           values <- get
           put
             . Map.insert
@@ -288,21 +292,21 @@ processNode node = do
                 (CFilePath (filePath file))
             $ values
           pure (Right ())
-        ("read_file", _, arr) ->
+        ("read_file", arr) ->
           pure (Left ["Wrong number of arguments for read_file: " <> T.pack (show (length arr))])
 
-        ("make_file", [], (CFilePath path):(CText text):[]) -> do
+        ("make_file", (CFilePath path):(CText text):[]) -> do
           results <- get
           put $
             Map.insert
               (Key (nodeId node <> ".result"))
-              (CFile (CatboxFile path text))
+              (CFile (File path text))
               results
           pure (Right ())
-        ("make_file", _, arr) ->
+        ("make_file", arr) ->
           pure (Left ["Wrong number of arguments for make_file: " <> T.pack (show (length arr))])
 
-        ("change_extension", extension:[], (CFilePath path):[]) -> do
+        ("change_extension", (CText extension):(CFilePath path):[]) -> do
           results <- get
           put $
             Map.insert
@@ -310,10 +314,10 @@ processNode node = do
               (CFilePath (FilePath.replaceExtension path (T.unpack extension)))
               results
           pure (Right ())
-        ("change_extension", _, arr) ->
+        ("change_extension", arr) ->
           pure (Left ["Wrong number of arguments for change_extension: " <> T.pack (show (length arr))])
 
-        (function, _, _) ->
+        (function, _) ->
           pure (Left ["Cannot find function " <> function])
 
 -------------------------------------------------------------------------------

@@ -1,10 +1,11 @@
 module Catbox.Internal.Monad
 ( Catbox
+, evalCatbox
 , runCatbox
 
 -- Helper functions
-, lookupResults
-, lookupResult
+, resolveParameters
+, resolveParameter
 ) where
 
 import Catbox.Internal.Types
@@ -20,6 +21,10 @@ newtype Catbox a = Catbox (StateT Results Identity a)
     ( MonadState Results
     )
 
+evalCatbox :: Catbox a -> Results -> a
+evalCatbox (Catbox stateT) =
+  runIdentity . evalStateT stateT
+
 runCatbox :: Catbox a -> Results -> (a, Results)
 runCatbox (Catbox stateT) =
   runIdentity . runStateT stateT
@@ -28,17 +33,21 @@ runCatbox (Catbox stateT) =
 -- Helper Functions
 -------------------------------------------------------------------------------
 
-lookupResults :: [Key] -> Catbox (Either [Text] [Value])
-lookupResults connections = do
-  results <- traverse lookupResult connections
+resolveParameters :: [Parameter] -> Catbox (Either [Text] [Value])
+resolveParameters parameters = do
+  results <- traverse resolveParameter parameters
   pure (collectEithers results)
 
-lookupResult :: Key -> Catbox (Either Text Value)
-lookupResult connection = do
-  cache <- get
-  case Map.lookup connection cache of
-    Nothing -> pure (Left ("Cannot find " <> keyToText connection))
-    Just arg -> pure (Right arg)
+resolveParameter :: Parameter -> Catbox (Either Text Value)
+resolveParameter parameter =
+  case parameter of
+    Constant value ->
+      pure (Right value)
+    Connection key -> do
+      cache <- get
+      case Map.lookup key cache of
+        Nothing -> pure (Left ("Cannot find " <> keyToText key))
+        Just arg -> pure (Right arg)
 
 collectEithers :: [Either a b] -> Either [a] [b]
 collectEithers eithers =
