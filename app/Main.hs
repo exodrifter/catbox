@@ -24,7 +24,7 @@ main = do
       ( fullDesc
      <> progDesc "Process a set of documents using a catbox graph."
      <> header "catbox - document transformation application" )
-  (graphPath, inputDirectory, outputDirectory) <- firstExecParser opts
+  Options {..} <- firstExecParser opts
 
   -- Read the graph
   file <- TIO.readFile graphPath
@@ -106,6 +106,13 @@ processResult outputDirectory (output, value) = do
 -- Command line parsing
 -------------------------------------------------------------------------------
 
+data Options =
+  Options
+    { graphPath :: FilePath
+    , inputDirectory :: FilePath
+    , outputDirectory :: FilePath
+    }
+
 -- We only want to consider the first two positional arguments the first time
 -- we parse the command line options, because we don't know what the flags are
 -- until the graph is read. This is because we generate flags based on what the
@@ -116,20 +123,24 @@ firstExecParser pinfo = do
   handleParseResult $
     execParserPure defaultPrefs pinfo (take 5 args)
 
-catboxParser :: Parser (FilePath, FilePath, FilePath)
+catboxParser :: Parser Options
 catboxParser = do
   graphPath <- argument str (metavar "GRAPH")
-  inputPath <- strOption
-          ( long "input"
-         <> metavar "PATH"
-         <> help "The path to the input directory." )
-  outputPath <- strOption
-          ( long "output"
-         <> metavar "PATH"
-         <> help "The path to the output directory." )
-  pure (graphPath, inputPath, outputPath)
+  inputDirectory <-
+    strOption
+      (  long "input"
+      <> metavar "PATH"
+      <> help "The path to the input directory."
+      )
+  outputDirectory <-
+    strOption
+      (  long "output"
+      <> metavar "PATH"
+      <> help "The path to the output directory."
+      )
+  pure Options { .. }
 
-inputsParser :: [Input] -> Parser ((FilePath, FilePath, FilePath) -> Results)
+inputsParser :: [Input] -> Parser (Options -> Results)
 inputsParser inputs = do
   results <- traverse inputParser inputs
   pure (const $ Map.unions results)
