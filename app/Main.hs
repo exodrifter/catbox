@@ -9,9 +9,12 @@ import Toml (TomlParseError (..), pretty)
 import qualified Data.List as List
 import qualified Data.Map as Map
 import qualified Data.Text as T
+import qualified Data.Text.Lazy as TL
 import qualified Data.Text.IO as TIO
 import qualified System.Directory as Directory
 import qualified System.FilePath as FilePath
+import qualified Text.Blaze.Html.Renderer.Text as Blaze
+import qualified Text.Pandoc as Pandoc
 import qualified Toml
 
 main :: IO ()
@@ -80,10 +83,16 @@ processResults outputDirectory results returns = do
       traverse_ (processResult outputDirectory) successfulReturns
 
 processResult :: FilePath -> (Return, Value) -> IO ()
-processResult outputDirectory (return, value) =
-  case value of
-    CText value ->
+processResult outputDirectory (return, value) = do
+  let
+    printDebug value =
       TIO.putStrLn (returnName return <> " = " <> T.pack (show value))
+
+  case value of
+    CText value -> printDebug value
+    CFilePath value -> printDebug value
+    CPandoc value -> printDebug value
+
     CFile (CatboxFile path text) -> do
       let
         outputPath = FilePath.combine outputDirectory path
@@ -191,9 +200,51 @@ processNode node = do
 
     -- We found all the required inputs, lets run the function now!
     Right args ->
-      case (nodeFunction node, args) of
+      case (nodeFunction node, nodeParameters node, args) of
 
-        ("uppercase", (CText a):[]) -> do
+        ("parse_markdown", [], (CText a):[]) -> do
+          results <- get
+          let pandocResult =
+                  runIdentity
+                . flip evalStateT Pandoc.def
+                . flip evalStateT Pandoc.def
+                . runExceptT
+                . Pandoc.unPandocPure
+                $ Pandoc.readMarkdown Pandoc.def a
+          case pandocResult of
+            Left err -> pure (Left [Pandoc.renderError err])
+            Right pandoc -> do
+              put $
+                Map.insert
+                  (Key (nodeId node <> ".result"))
+                  (CPandoc pandoc)
+                  results
+              pure (Right ())
+        ("parse_markdown", _, arr) ->
+          pure (Left ["Wrong number of arguments for parse_markdown: " <> T.pack (show (length arr))])
+
+        ("render_html5", [], (CPandoc pandoc):[]) -> do
+          results <- get
+          let pandocResult =
+                  runIdentity
+                . flip evalStateT Pandoc.def
+                . flip evalStateT Pandoc.def
+                . runExceptT
+                . Pandoc.unPandocPure
+                $ Pandoc.writeHtml5 Pandoc.def pandoc
+          case pandocResult of
+            Left err -> pure (Left [Pandoc.renderError err])
+            Right html -> do
+              put $
+                Map.insert
+                  (Key (nodeId node <> ".result"))
+                  (CText (TL.toStrict (Blaze.renderHtml html)))
+                  results
+              pure (Right ())
+        ("render_html5", _, arr) ->
+          pure (Left ["Wrong number of arguments for render_html5: " <> T.pack (show (length arr))])
+
+        ("uppercase", [], (CText a):[]) -> do
           results <- get
           put $
             Map.insert
@@ -201,10 +252,10 @@ processNode node = do
               (CText (T.toUpper a))
               results
           pure (Right ())
-        ("uppercase", arr) ->
+        ("uppercase", _, arr) ->
           pure (Left ["Wrong number of arguments for uppercase: " <> T.pack (show (length arr))])
 
-        ("lowercase", (CText a):[]) -> do
+        ("lowercase", [], (CText a):[]) -> do
           results <- get
           put $
             Map.insert
@@ -212,10 +263,10 @@ processNode node = do
               (CText (T.toLower a))
               results
           pure (Right ())
-        ("lowercase", arr) ->
+        ("lowercase", _, arr) ->
           pure (Left ["Wrong number of arguments for lowercase: " <> T.pack (show (length arr))])
 
-        ("concat", (CText a):(CText b):[]) -> do
+        ("concat", [], (CText a):(CText b):[]) -> do
           results <- get
           put $
             Map.insert
@@ -223,10 +274,10 @@ processNode node = do
               (CText (a <> b))
               results
           pure (Right ())
-        ("concat", arr) ->
+        ("concat", _, arr) ->
           pure (Left ["Wrong number of arguments for concat: " <> T.pack (show (length arr))])
 
-        ("read_file", (CFile file):[]) -> do
+        ("read_file", [], (CFile file):[]) -> do
           values <- get
           put
             . Map.insert
@@ -237,10 +288,10 @@ processNode node = do
                 (CFilePath (filePath file))
             $ values
           pure (Right ())
-        ("read_file", arr) ->
+        ("read_file", _, arr) ->
           pure (Left ["Wrong number of arguments for read_file: " <> T.pack (show (length arr))])
 
-        ("make_file", (CFilePath path):(CText text):[]) -> do
+        ("make_file", [], (CFilePath path):(CText text):[]) -> do
           results <- get
           put $
             Map.insert
@@ -248,11 +299,22 @@ processNode node = do
               (CFile (CatboxFile path text))
               results
           pure (Right ())
-        ("make_file", arr) ->
+        ("make_file", _, arr) ->
           pure (Left ["Wrong number of arguments for make_file: " <> T.pack (show (length arr))])
 
-        _ ->
-          pure (Left ["Cannot find function"])
+        ("change_extension", extension:[], (CFilePath path):[]) -> do
+          results <- get
+          put $
+            Map.insert
+              (Key (nodeId node <> ".result"))
+              (CFilePath (FilePath.replaceExtension path (T.unpack extension)))
+              results
+          pure (Right ())
+        ("change_extension", _, arr) ->
+          pure (Left ["Wrong number of arguments for change_extension: " <> T.pack (show (length arr))])
+
+        (function, _, _) ->
+          pure (Left ["Cannot find function " <> function])
 
 -------------------------------------------------------------------------------
 -- Helper Functions

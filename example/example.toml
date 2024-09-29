@@ -5,27 +5,54 @@ type = "file"
 [[nodes]]
 id = "read"
 function = "read_file"
+parameters = []
 in = [ "in.file" ]
 
 [[nodes]]
 id = "upper"
 function = "uppercase"
+parameters = []
 in = [ "read.text" ]
 
 [[nodes]]
 id = "lower"
 function = "lowercase"
+parameters = []
 in = [ "read.text" ]
 
 [[nodes]]
 id = "concat"
 function = "concat"
+parameters = []
 in = [ "upper.result", "lower.result" ]
+
+[[nodes]]
+id = "parse"
+function = "parse_markdown"
+parameters = []
+in = [ "concat.result" ]
+
+[[nodes]]
+id = "render"
+function = "render_html5"
+parameters = []
+in = [ "parse.result" ]
+
+[[nodes]]
+id = "new_path"
+function = "change_extension"
+parameters = [ "html" ]
+in = [ "read.path" ]
 
 [[nodes]]
 id = "output"
 function = "make_file"
-in = [ "read.path", "concat.result" ]
+parameters = []
+in = [ "new_path.result", "render.result" ]
+
+[[out]]
+name = "output_path"
+from = "new_path.result"
 
 [[out]]
 name = "file"

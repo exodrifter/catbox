@@ -4,7 +4,7 @@ module Catbox.Internal.Types
 
 -- Parts of the graph
 , Parameter(parameterName, parameterType)
-, Node(nodeId, nodeFunction, nodeConnections)
+, Node(nodeId, nodeFunction, nodeParameters, nodeConnections)
 , Return(returnName, returnConnection)
 
 -- Primitive types used by the graph
@@ -14,6 +14,7 @@ module Catbox.Internal.Types
 , CatboxFile(..)
 ) where
 
+import Text.Pandoc (Pandoc)
 import Toml (TomlCodec, (.=))
 import qualified Toml
 
@@ -51,6 +52,7 @@ data Node =
   Node
     { nodeId :: Text
     , nodeFunction :: Text
+    , nodeParameters :: [Text]
     , nodeConnections :: [Key]
     }
 
@@ -59,6 +61,7 @@ nodeCodec =
   Node
     <$> Toml.text "id" .= nodeId
     <*> Toml.text "function" .= nodeFunction
+    <*> Toml.arrayOf Toml._Text "parameters" .= nodeParameters
     <*> Toml.arrayOf (Toml._Coerce Toml._Text) "in" .= nodeConnections
 
 data Return =
@@ -89,6 +92,7 @@ data Value =
     CText Text
   | CFilePath FilePath
   | CFile CatboxFile
+  | CPandoc Pandoc
   deriving (Eq, Show)
 
 data CatboxFile =
