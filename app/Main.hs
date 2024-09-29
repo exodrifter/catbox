@@ -70,18 +70,18 @@ processResults outputDirectory results outputs = do
       (\v -> (output, v)) <$>
         (evalCatbox (resolveParameter (outputParameter output)) results)
 
-  case collectEithers (loadResult <$> outputs) of
+  case partitionEithers (loadResult <$> outputs) of
+
+    -- All of the results are available, print/write the results
+    ([], successfulReturns) -> do
+      TIO.putStrLn "SUCCESS!"
+      traverse_ (processResult outputDirectory) successfulReturns
 
     -- Some results are missing!
-    Left failedOutputs -> do
+    (failedOutputs, _) -> do
       TIO.putStrLn $
            "Could not find results for: "
         <> T.intercalate ", " (T.pack . show <$> failedOutputs)
-
-    -- All of the results are available, print/write the results
-    Right successfulReturns -> do
-      TIO.putStrLn "SUCCESS!"
-      traverse_ (processResult outputDirectory) successfulReturns
 
 processResult :: FilePath -> (Output, Value) -> IO ()
 processResult outputDirectory (output, value) = do
@@ -164,43 +164,31 @@ inputParser input =
 -- it fails to do so.
 processNodes :: [Node] -> Catbox (Either [Text] ())
 processNodes nodes = do
-  values <- get
-  let
-    hasInputs :: Node -> Bool
-    hasInputs node =
-      List.all hasInput (nodeParameters node)
-    hasInput :: Parameter -> Bool
-    hasInput parameter =
-      case parameter of
-        Constant _ -> True
-        Connection key -> Map.member key values
+  results <- traverse processNode nodes
+  case partitionEithers results of
 
-  case List.partition hasInputs nodes of
-
-    -- All of the nodes have been processed, so there isn't anything to do.
+    -- Nothing happened because all nodes have been processed; we're done!
     ([], []) ->
       pure (Right ())
 
-    -- Some of the nodes didn't process because their inputs are not available.
-    ([], nodes) ->
+    -- We still have nodes to process, but we were also unable to process any
+    -- of them.
+    (later, []) ->
       pure (Left ["Could not execute nodes: " <> T.intercalate ", " (nodeId <$> nodes)])
 
-    -- Some of the nodes can be processed now because their inputs are
-    -- available.
-    (next, later) -> do
-      results <- traverse processNode next
-      case collectEithers results of
-        Left errs -> pure (Left (concat errs))
-        Right _ -> processNodes later
+    -- We were able to process some nodes, so lets try the ones that failed
+    -- again.
+    (later, _) ->
+      processNodes (fst <$> later)
 
-processNode :: Node -> Catbox (Either [Text] ())
+processNode :: Node -> Catbox (Either (Node, [Text]) ())
 processNode node = do
   results <- resolveParameters (nodeParameters node)
   case results of
 
     -- We failed to find all of the inputs required for this node.
     Left errs ->
-      pure (Left errs)
+      pure (Left (node, errs))
 
     -- We found all the required inputs, lets run the function now!
     Right args ->
@@ -216,7 +204,7 @@ processNode node = do
                 . Pandoc.unPandocPure
                 $ Pandoc.readMarkdown Pandoc.def a
           case pandocResult of
-            Left err -> pure (Left [Pandoc.renderError err])
+            Left err -> pure (Left (node, [Pandoc.renderError err]))
             Right pandoc -> do
               put $
                 Map.insert
@@ -225,7 +213,7 @@ processNode node = do
                   results
               pure (Right ())
         ("parse_markdown", arr) ->
-          pure (Left ["Wrong number of arguments for parse_markdown: " <> T.pack (show (length arr))])
+          pure (Left (node, ["Wrong number of arguments for parse_markdown: " <> T.pack (show (length arr))]))
 
         ("render_html5", (CPandoc pandoc):[]) -> do
           results <- get
@@ -237,7 +225,7 @@ processNode node = do
                 . Pandoc.unPandocPure
                 $ Pandoc.writeHtml5 Pandoc.def pandoc
           case pandocResult of
-            Left err -> pure (Left [Pandoc.renderError err])
+            Left err -> pure (Left (node, [Pandoc.renderError err]))
             Right html -> do
               put $
                 Map.insert
@@ -246,7 +234,7 @@ processNode node = do
                   results
               pure (Right ())
         ("render_html5", arr) ->
-          pure (Left ["Wrong number of arguments for render_html5: " <> T.pack (show (length arr))])
+          pure (Left (node, ["Wrong number of arguments for render_html5: " <> T.pack (show (length arr))]))
 
         ("uppercase", (CText a):[]) -> do
           results <- get
@@ -257,7 +245,7 @@ processNode node = do
               results
           pure (Right ())
         ("uppercase", arr) ->
-          pure (Left ["Wrong number of arguments for uppercase: " <> T.pack (show (length arr))])
+          pure (Left (node, ["Wrong number of arguments for uppercase: " <> T.pack (show (length arr))]))
 
         ("lowercase", (CText a):[]) -> do
           results <- get
@@ -268,7 +256,7 @@ processNode node = do
               results
           pure (Right ())
         ("lowercase", arr) ->
-          pure (Left ["Wrong number of arguments for lowercase: " <> T.pack (show (length arr))])
+          pure (Left (node, ["Wrong number of arguments for lowercase: " <> T.pack (show (length arr))]))
 
         ("concat", (CText a):(CText b):[]) -> do
           results <- get
@@ -279,7 +267,7 @@ processNode node = do
               results
           pure (Right ())
         ("concat", arr) ->
-          pure (Left ["Wrong number of arguments for concat: " <> T.pack (show (length arr))])
+          pure (Left (node, ["Wrong number of arguments for concat: " <> T.pack (show (length arr))]))
 
         ("read_file", (CFile file):[]) -> do
           values <- get
@@ -293,7 +281,7 @@ processNode node = do
             $ values
           pure (Right ())
         ("read_file", arr) ->
-          pure (Left ["Wrong number of arguments for read_file: " <> T.pack (show (length arr))])
+          pure (Left (node, ["Wrong number of arguments for read_file: " <> T.pack (show (length arr))]))
 
         ("make_file", (CFilePath path):(CText text):[]) -> do
           results <- get
@@ -304,7 +292,7 @@ processNode node = do
               results
           pure (Right ())
         ("make_file", arr) ->
-          pure (Left ["Wrong number of arguments for make_file: " <> T.pack (show (length arr))])
+          pure (Left (node, ["Wrong number of arguments for make_file: " <> T.pack (show (length arr))]))
 
         ("change_extension", (CText extension):(CFilePath path):[]) -> do
           results <- get
@@ -315,19 +303,7 @@ processNode node = do
               results
           pure (Right ())
         ("change_extension", arr) ->
-          pure (Left ["Wrong number of arguments for change_extension: " <> T.pack (show (length arr))])
+          pure (Left (node, ["Wrong number of arguments for change_extension: " <> T.pack (show (length arr))]))
 
         (function, _) ->
-          pure (Left ["Cannot find function " <> function])
-
--------------------------------------------------------------------------------
--- Helper Functions
--------------------------------------------------------------------------------
-
-collectEithers :: [Either a b] -> Either [a] [b]
-collectEithers eithers =
-  case partitionEithers eithers of
-    ([], results) ->
-      Right results
-    (errors, _) ->
-      Left errors
+          pure (Left (node, ["Cannot find function " <> function]))
