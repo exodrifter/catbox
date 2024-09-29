@@ -6,7 +6,8 @@ module Catbox.Internal.Types
 , Input(inputName, inputType)
 , Node(nodeId, nodeFunction, nodeParameters)
 , Output(outputName, outputParameter)
-, Parameter(..)
+, Parameter(parameterName, parameterSource)
+, ParameterSource(..)
 
 -- Primitive types used by the graph
 , Results(..)
@@ -71,11 +72,23 @@ nodeCodec =
     <*> Toml.list parameterCodec "parameters" .= nodeParameters
 
 data Parameter =
-    Connection Key
-  | Constant Value
+  Parameter
+    { parameterName :: Text
+    , parameterSource :: ParameterSource
+    }
 
 parameterCodec :: TomlCodec Parameter
 parameterCodec =
+  Parameter
+    <$> Toml.text "name" .= parameterName
+    <*> parameterSourceCodec .= parameterSource
+
+data ParameterSource =
+    Connection Key
+  | Constant Value
+
+parameterSourceCodec :: TomlCodec ParameterSource
+parameterSourceCodec =
   let
     matchConnection (Connection key) = Just key
     matchConnection _ = Nothing
@@ -108,7 +121,7 @@ type Results = Map Key Value
 
 -- Represents the key for a result in a node graph.
 newtype Key = Key { keyToText :: Text }
-  deriving newtype (Eq, IsString, Ord, Show)
+  deriving newtype (Eq, IsString, Ord, Semigroup, Show)
 
 -- The different kinds of values you can pass in catbox.
 data Value =

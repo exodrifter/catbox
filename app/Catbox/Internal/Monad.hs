@@ -4,6 +4,7 @@ module Catbox.Internal.Monad
 , runCatbox
 
 -- Helper functions
+, insertKey
 , resolveParameters
 , resolveParameter
 ) where
@@ -33,26 +34,30 @@ runCatbox (Catbox stateT) =
 -- Helper Functions
 -------------------------------------------------------------------------------
 
-resolveParameters :: [Parameter] -> Catbox (Either [Text] [Value])
+insertKey :: Key -> Value -> Catbox ()
+insertKey key value = do
+  results <- get
+  put (Map.insert key value results)
+
+resolveParameters :: [Parameter] -> Catbox (Either [Text] (Map Text Value))
 resolveParameters parameters = do
   results <- traverse resolveParameter parameters
-  pure (collectEithers results)
-
-resolveParameter :: Parameter -> Catbox (Either Text Value)
-resolveParameter parameter =
-  case parameter of
-    Constant value ->
-      pure (Right value)
-    Connection key -> do
-      cache <- get
-      case Map.lookup key cache of
-        Nothing -> pure (Left ("Cannot find " <> keyToText key))
-        Just arg -> pure (Right arg)
-
-collectEithers :: [Either a b] -> Either [a] [b]
-collectEithers eithers =
-  case partitionEithers eithers of
+  case partitionEithers results of
     ([], results) ->
-      Right results
+      pure (Right (Map.fromList results))
     (errors, _) ->
-      Left errors
+      pure (Left errors)
+
+resolveParameter :: Parameter -> Catbox (Either Text (Text, Value))
+resolveParameter parameter = do
+  case parameterSource parameter of
+    Constant const ->
+      pure (Right (parameterName parameter, const))
+    Connection key -> do
+      results <- get
+      case Map.lookup key results of
+        Nothing ->
+          pure (Left ("Cannot find " <> keyToText key))
+        Just value ->
+          pure (Right (parameterName parameter, value))
+

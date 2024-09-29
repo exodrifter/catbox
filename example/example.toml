@@ -5,42 +5,42 @@ type = "file"
 [[nodes]]
 id = "read"
 function = "read_file"
-parameters = [ { key = "in.file" } ]
+parameters = [ { name = "file", key = "in.file" } ]
 
 [[nodes]]
 id = "upper"
 function = "uppercase"
-parameters = [ { key = "read.text" } ]
+parameters = [ { name = "text", key = "read.text" } ]
 
 [[nodes]]
 id = "lower"
 function = "lowercase"
-parameters = [ { key = "read.text" } ]
+parameters = [ { name = "text", key = "read.text" } ]
 
 [[nodes]]
 id = "concat"
 function = "concat"
-parameters = [ { key = "upper.result" }, { key = "lower.result" } ]
+parameters = [ { name = "a", key = "upper.result" }, { name = "b", key = "lower.result" } ]
 
 [[nodes]]
 id = "parse"
 function = "parse_markdown"
-parameters = [ { key = "concat.result" } ]
+parameters = [ { name = "text", key = "concat.result" } ]
 
 [[nodes]]
 id = "render"
 function = "render_html5"
-parameters = [ { key = "parse.result" } ]
+parameters = [ { name = "pandoc", key = "parse.result" } ]
 
 [[nodes]]
 id = "new_path"
 function = "change_extension"
-parameters = [ { text = "html" }, { key = "read.path" } ]
+parameters = [ { name="extension", text = "html" }, { name="path", key = "read.path" } ]
 
 [[nodes]]
 id = "output"
 function = "make_file"
-parameters = [ { key = "new_path.result" }, { key = "render.result" } ]
+parameters = [ { name = "path", key = "new_path.result" }, { name = "text", key = "render.result" } ]
 
 [[out]]
 name = "output_path"

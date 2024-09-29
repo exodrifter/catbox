@@ -24,7 +24,10 @@ executable catbox
     main-is: Main.hs
     other-modules:
       Catbox.Internal
+      Catbox.Internal.Base
+      Catbox.Internal.Function
       Catbox.Internal.Monad
+      Catbox.Internal.Pandoc
       Catbox.Internal.Types
 
     default-extensions:
