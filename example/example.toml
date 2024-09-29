@@ -1,0 +1,32 @@
+[[in]]
+name = "file"
+type = "file"
+
+[[nodes]]
+id = "read"
+function = "read_file"
+in = [ "in.file" ]
+
+[[nodes]]
+id = "upper"
+function = "uppercase"
+in = [ "read.text" ]
+
+[[nodes]]
+id = "lower"
+function = "lowercase"
+in = [ "read.text" ]
+
+[[nodes]]
+id = "concat"
+function = "concat"
+in = [ "upper.result", "lower.result" ]
+
+[[nodes]]
+id = "output"
+function = "make_file"
+in = [ "read.path", "concat.result" ]
+
+[[out]]
+name = "file"
+from = "output.result"
