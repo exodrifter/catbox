@@ -26,6 +26,7 @@ executable catbox
       Catbox.Function
       Catbox.Function.Base
       Catbox.Function.Pandoc
+      Catbox.Function.Path
       Catbox.Internal
       Catbox.Internal.Execute
       Catbox.Internal.Function

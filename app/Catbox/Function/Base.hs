@@ -12,24 +12,12 @@ import qualified System.FilePath as FilePath
 baseFunctions :: Map Text Function
 baseFunctions =
   Map.fromList $ (\g -> (functionName g, g)) <$>
-    [ changeExtensionFunction
-    , concatFunction
+    [ concatFunction
     , fileContentsFunction
     , lowercaseFunction
     , makeFileFunction
     , uppercaseFunction
     ]
-
-changeExtensionFunction :: Function
-changeExtensionFunction =
-  Function { functionName = "change_extension", .. }
-  where
-    functionExec params key = do
-      extension <- getText "extension" params
-      path <- getFilePath "path" params
-      insertKey
-        (key <> ".result")
-        (CFilePath (FilePath.replaceExtension path (T.unpack extension)))
 
 concatFunction :: Function
 concatFunction =
