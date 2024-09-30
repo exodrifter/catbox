@@ -34,42 +34,64 @@ main = do
     Left msgs ->
       TIO.putStrLn (Toml.prettyTomlDecodeErrors msgs)
 
-    -- Read input
+    -- Create state
     Right graph -> do
-      let
-        inputs = graphInputs graph
-        graphOpts = info (catboxParser <**> inputsParser inputs <**> helper) fullDesc
-      rawInputs <- execParser graphOpts
-
-      -- Read the files
-      let
-        loadFile :: Results -> (Key, Value) -> IO Results
-        loadFile results (key, value) =
-          case value of
-            CFile (File path _) -> do
-              text <- TIO.readFile (FilePath.combine inputDirectory path)
-              pure (Map.insert key (CFile (File path text)) results)
-            CFilePath _ -> pure results
-            CPandoc _ -> pure results
-            CText _ -> pure results
-      inputs <- foldlM loadFile rawInputs (Map.toList rawInputs)
+      initialState <- createCatboxState inputDirectory graph
 
       -- Execute graph and print result
-      let (result, newValues) = runCatbox (processNodes (graphNodes graph)) inputs
+      let (result, finalState) = runCatbox (processNodes (graphNodes graph)) initialState
       case result of
         Left errs -> do
           TIO.putStrLn ("FAILED! " <> errs)
-        Right result -> do
-          processResults outputDirectory newValues (graphOutputs graph)
+        Right () -> do
+          processResults outputDirectory finalState (graphOutputs graph)
+
+createCatboxState :: FilePath -> Graph -> IO CatboxState
+createCatboxState inputDirectory graph = do
+  let
+    inputs = graphInputs graph
+    graphOpts = info (catboxParser <**> inputsParser inputs <**> helper) fullDesc
+  catboxResults <- execParser graphOpts
+
+  paths <- listFilesRecursive inputDirectory ""
+  catboxFiles <- loadFiles inputDirectory paths
+
+  pure CatboxState { .. }
+
+listFilesRecursive :: FilePath -> FilePath -> IO [FilePath]
+listFilesRecursive base path = do
+  let
+    currentDir = FilePath.combine base path
+
+    collectEntries :: FilePath -> IO [FilePath]
+    collectEntries entry = do
+      let baseRelativePath = FilePath.combine path entry
+      isDir <- Directory.doesDirectoryExist (FilePath.combine currentDir entry)
+      if isDir
+      then listFilesRecursive base baseRelativePath
+      else pure [baseRelativePath]
+
+  entries <- Directory.listDirectory currentDir
+  concat <$> traverse collectEntries entries
+
+loadFiles :: FilePath -> [FilePath] -> IO (Map FilePath Text)
+loadFiles inputPath paths = do
+  let
+    loadFile :: FilePath -> IO (FilePath, Text)
+    loadFile path = do
+      contents <- TIO.readFile (FilePath.combine inputPath path)
+      pure (path, contents)
+
+  Map.fromList <$> traverse loadFile paths
 
 -- Write results to disk and buffer only if all outputs are available.
-processResults :: FilePath -> Results -> [Output] -> IO ()
-processResults outputDirectory results outputs = do
+processResults :: FilePath -> CatboxState -> [Output] -> IO ()
+processResults outputDirectory state outputs = do
   let
     loadResult :: Output -> Either Text (Output, Value)
     loadResult output =
       (\(_, v) -> (output, v)) <$>
-        evalCatbox (resolveParameter (outputParameter output)) results
+        evalCatbox (resolveParameter (outputParameter output)) state
 
   case partitionEithers (loadResult <$> outputs) of
 
@@ -158,6 +180,15 @@ inputParser input =
         Map.singleton
           (Key ("in." <> inputName input))
           (CText value)
+    "path" -> do
+      path <- strOption
+          ( long (T.unpack (inputName input))
+         <> metavar "VALUE"
+         <> help "path" )
+      pure $
+        Map.singleton
+          (Key ("in." <> inputName input))
+          (CFilePath path)
     "file" -> do
       path <- strOption
           ( long (T.unpack (inputName input))

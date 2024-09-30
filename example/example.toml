@@ -1,21 +1,21 @@
 [[in]]
-name = "file"
-type = "file"
+name = "path"
+type = "path"
 
 [[nodes]]
-id = "read"
-function = "read_file"
-parameters = [ { name = "file", key = "in.file" } ]
+id = "file"
+function = "file_contents"
+parameters = [ { name = "path", key = "in.path" } ]
 
 [[nodes]]
 id = "upper"
 function = "uppercase"
-parameters = [ { name = "text", key = "read.text" } ]
+parameters = [ { name = "text", key = "file.result" } ]
 
 [[nodes]]
 id = "lower"
 function = "lowercase"
-parameters = [ { name = "text", key = "read.text" } ]
+parameters = [ { name = "text", key = "file.result" } ]
 
 [[nodes]]
 id = "concat"
@@ -35,7 +35,7 @@ parameters = [ { name = "pandoc", key = "parse.result" } ]
 [[nodes]]
 id = "new_path"
 function = "change_extension"
-parameters = [ { name="extension", text = "html" }, { name="path", key = "read.path" } ]
+parameters = [ { name="extension", text = "html" }, { name="path", key = "in.path" } ]
 
 [[nodes]]
 id = "output"

@@ -14,9 +14,9 @@ baseFunctions =
   Map.fromList $ (\g -> (functionName g, g)) <$>
     [ changeExtensionFunction
     , concatFunction
+    , fileContentsFunction
     , lowercaseFunction
     , makeFileFunction
-    , readFileFunction
     , uppercaseFunction
     ]
 
@@ -42,6 +42,17 @@ concatFunction =
         (key <> ".result")
         (CText (a <> b))
 
+fileContentsFunction :: Function
+fileContentsFunction =
+  Function { functionName = "file_contents", .. }
+  where
+    functionExec params key = do
+      path <- getFilePath "path" params
+      contents <- getFileContents path
+      insertKey
+        (key <> ".result")
+        (CText contents)
+
 lowercaseFunction :: Function
 lowercaseFunction =
   Function { functionName = "lowercase", .. }
@@ -62,19 +73,6 @@ makeFileFunction =
       insertKey
         (key <> ".result")
         (CFile (File path text))
-
-readFileFunction :: Function
-readFileFunction =
-  Function { functionName = "read_file", .. }
-  where
-    functionExec params key = do
-      file <- getFile "file" params
-      insertKey
-        (key <> ".text")
-        (CText (fileText file))
-      insertKey
-        (key <> ".path")
-        (CFilePath (filePath file))
 
 uppercaseFunction :: Function
 uppercaseFunction =
