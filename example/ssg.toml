@@ -10,12 +10,12 @@ parameters = [ { name = "path", key = "in.path" } ]
 [[nodes]]
 id = "upper"
 type = { function = "uppercase" }
-parameters = [ { name = "text", key = "read.text" } ]
+parameters = [ { name = "text", key = "read.result" } ]
 
 [[nodes]]
 id = "lower"
 type = { function = "lowercase" }
-parameters = [ { name = "text", key = "read.text" } ]
+parameters = [ { name = "text", key = "read.result" } ]
 
 [[nodes]]
 id = "concat"
@@ -35,7 +35,7 @@ parameters = [ { name = "pandoc", key = "parse.result" } ]
 [[nodes]]
 id = "new_path"
 type = { function = "change_extension" }
-parameters = [ { name = "extension", text = "html" }, { name="path", key = "read.path" } ]
+parameters = [ { name = "extension", text = "html" }, { name="path", key = "in.path" } ]
 
 [[nodes]]
 id = "output"
@@ -43,9 +43,13 @@ type = { function = "make_file" }
 parameters = [ { name = "path", key = "new_path.result" }, { name = "text", key = "render.result" } ]
 
 [[out]]
-name = "output_path"
+name = "file"
+key = "output.result"
+
+[[out]]
+name = "path"
 key = "new_path.result"
 
 [[out]]
-name = "file"
-key = "output.result"
+name = "text"
+key = "render.result"

@@ -29,31 +29,39 @@ main = do
   Options {..} <- execParser opts
 
   -- Read the graph
-  file <- TIO.readFile graphPath
-  case Toml.decode graphCodec file of
-    Left msgs ->
-      TIO.putStrLn (Toml.prettyTomlDecodeErrors msgs)
+  result <- createCatboxState inputDirectory graphPath
+  case result of
+    Left errs ->
+      traverse_ TIO.putStrLn errs
+    Right initialState ->
+      case Map.lookup graphPath (catboxGraphs initialState) of
+        Nothing ->
+          TIO.putStrLn "Failed to load graphs"
 
-    -- Create state
-    Right graph -> do
-      initialState <- createCatboxState inputDirectory graph
+        Just graph -> do
+          -- Execute graph and print result
+          let
+            functions = baseFunctions <> pandocFunctions
+            result = processGraph graphPath functions graph initialState
+          case result of
+            Left errs -> do
+              TIO.putStrLn ("FAILED! " <> errs)
+            Right finalState -> do
+              processResults outputDirectory finalState
 
-      -- Execute graph and print result
-      let (result, finalState) = runCatbox (processNodes (graphNodes graph)) initialState
-      case result of
-        Left errs -> do
-          TIO.putStrLn ("FAILED! " <> errs)
-        Right () -> do
-          processResults outputDirectory finalState (graphOutputs graph)
-
-createCatboxState :: FilePath -> Graph -> IO CatboxState
-createCatboxState inputDirectory graph = do
+createCatboxState :: FilePath -> FilePath -> IO (Either [Text] CatboxState)
+createCatboxState inputDirectory graphPath = do
   let catboxResults = Map.empty
 
   paths <- listFilesRecursive inputDirectory ""
   catboxFiles <- loadFiles inputDirectory paths
 
-  pure CatboxState { .. }
+  result <- loadGraphs graphPath
+  case result of
+    Left errs ->
+      pure (Left errs)
+    Right catboxGraphs ->
+      pure (Right CatboxState { .. })
 
 listFilesRecursive :: FilePath -> FilePath -> IO [FilePath]
 listFilesRecursive base path = do
@@ -81,33 +89,41 @@ loadFiles inputPath paths = do
 
   Map.fromList <$> traverse loadFile paths
 
+loadGraphs :: FilePath -> IO (Either [Text] (Map FilePath Graph))
+loadGraphs path = do
+  -- Load this graph
+  file <- TIO.readFile path
+  case Toml.decode graphCodec file of
+    Left msgs -> do
+      pure (Left [Toml.prettyTomlDecodeErrors msgs])
+    Right graph -> do
+
+      -- Find dependencies
+      let
+        extractGraph node =
+          case nodeType node of
+            NodeGraph p ->
+              Just (FilePath.combine (FilePath.takeDirectory path) p)
+            _ -> Nothing
+        dependencies = mapMaybe extractGraph (graphNodes graph)
+
+      results <- traverse loadGraphs dependencies
+      case partitionEithers results of
+        ([], graphs) ->
+          pure (Right (Map.unions (Map.singleton path graph:graphs)))
+        (errs, _) ->
+          pure (Left (concat errs))
+
 -- Write results to disk and buffer only if all outputs are available.
-processResults :: FilePath -> CatboxState -> [Output] -> IO ()
-processResults outputDirectory state outputs = do
-  let
-    loadResult :: Output -> Either Text (Output, Value)
-    loadResult output =
-      (\(_, v) -> (output, v)) <$>
-        evalCatbox (resolveParameter (outputParameter output)) state
+processResults :: FilePath -> Map Text Value -> IO ()
+processResults outputDirectory outputs = do
+  traverse_ (processResult outputDirectory) (Map.toList outputs)
 
-  case partitionEithers (loadResult <$> outputs) of
-
-    -- All of the results are available, print/write the results
-    ([], successfulReturns) -> do
-      TIO.putStrLn "SUCCESS!"
-      traverse_ (processResult outputDirectory) successfulReturns
-
-    -- Some results are missing!
-    (failedOutputs, _) -> do
-      TIO.putStrLn $
-           "Could not find results for: "
-        <> T.intercalate ", " (T.pack . show <$> failedOutputs)
-
-processResult :: FilePath -> (Output, Value) -> IO ()
-processResult outputDirectory (output, value) = do
+processResult :: FilePath -> (Text, Value) -> IO ()
+processResult outputDirectory (outputName, value) = do
   let
     printDebug value =
-      TIO.putStrLn (outputName output <> " = " <> T.pack (show value))
+      TIO.putStrLn (outputName <> " = " <> T.pack (show value))
 
   case value of
     CText value -> printDebug value
@@ -149,43 +165,3 @@ catboxParser = do
       <> help "The path to the output directory."
       )
   pure Options { .. }
-
--------------------------------------------------------------------------------
--- Program functions
--------------------------------------------------------------------------------
-
--- Tries to process the output of all nodes in the graph. Returns an error if
--- it fails to do so.
-processNodes :: [Node] -> Catbox Text ()
-processNodes nodes = do
-  let
-    tryExec :: [(Node, Text)] -> Node -> Catbox Text [(Node, Text)]
-    tryExec failed node = do
-      result <- tryError (processNode node)
-      case result of
-        Left err -> pure ((node, err):failed)
-        Right () -> pure failed
-
-  failed <- foldlM tryExec [] nodes
-
-  case failed of
-    -- Finished processing all nodes
-    [] -> pure ()
-
-    (node, e):_
-      -- We were unable to process any of the nodes.
-      | length failed == length nodes ->
-        throwError e -- TODO: Return all of the errors
-
-      -- Some succeeded, try again
-      | otherwise ->
-        processNodes (fst <$> failed)
-
-processNode :: Node -> Catbox Text ()
-processNode node = do
-  args <- resolveParameters (nodeParameters node)
-  invoke
-    (baseFunctions <> pandocFunctions)
-    (nodeType node)
-    args
-    (Key (nodeId node))

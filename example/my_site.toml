@@ -6,3 +6,11 @@ parameters = [ { name = "path", path = "input.md" } ]
 [[out]]
 name = "file"
 key = "ssg.file"
+
+[[out]]
+name = "path"
+key = "ssg.path"
+
+[[out]]
+name = "text"
+key = "ssg.text"

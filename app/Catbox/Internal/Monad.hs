@@ -7,10 +7,13 @@ module Catbox.Internal.Monad
 , throwError
 , tryError
 
--- File functions
+-- File Functions
 , getFileContents
 
--- Result functions
+-- Graph Functions
+, getGraph
+
+-- Result Functions
 , insertKey
 , resolveParameters
 , resolveParameter
@@ -34,9 +37,12 @@ newtype Catbox e a = Catbox (ExceptT e (StateT CatboxState Identity) a)
 
 data CatboxState =
   CatboxState
+    -- A map of file paths relative to the input folder to file contents.
+    { catboxFiles :: Map FilePath Text
+    -- A map of file paths relative to the working directory to file contents.
+    , catboxGraphs :: Map FilePath Graph
     -- Stores the result for each key in the node graph.
-    { catboxResults :: Map Key Value
-    , catboxFiles :: Map FilePath Text
+    , catboxResults :: Map Key Value
     }
 
 evalCatbox :: Catbox e a -> CatboxState -> Either e a
@@ -56,6 +62,17 @@ getFileContents path = do
   files <- gets catboxFiles
   case Map.lookup path files of
     Nothing -> throwError ("Cannot find file \"" <> T.pack path <> "\"")
+    Just file -> pure file
+
+-------------------------------------------------------------------------------
+-- Graph Functions
+-------------------------------------------------------------------------------
+
+getGraph :: FilePath -> Catbox Text Graph
+getGraph path = do
+  graph <- gets catboxGraphs
+  case Map.lookup path graph of
+    Nothing -> throwError ("Cannot find graph \"" <> T.pack path <> "\"")
     Just file -> pure file
 
 -------------------------------------------------------------------------------

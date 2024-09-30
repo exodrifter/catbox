@@ -74,7 +74,7 @@ nodeCodec =
 
 data NodeType =
     NodeFunction Text
-  | NodeGraph Text
+  | NodeGraph FilePath
 
 nodeTypeCodec :: TomlCodec NodeType
 nodeTypeCodec =
@@ -86,7 +86,7 @@ nodeTypeCodec =
     matchGraph _ = Nothing
 
   in    Toml.dimatch matchFunction NodeFunction (Toml.text "function")
-    <|> Toml.dimatch matchGraph NodeGraph (Toml.text "graph")
+    <|> Toml.dimatch matchGraph NodeGraph (Toml.string "graph")
 
 data Parameter =
   Parameter
