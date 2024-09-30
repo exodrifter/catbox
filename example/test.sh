@@ -3,7 +3,6 @@ set -e
 
 cd "$(dirname "$0")/.."
 
-cabal run catbox -- example/example.toml \
-  --input example/ \
-  --output example/output/ \
-  --path input.md
+cabal run catbox -- example/my_site.toml \
+  --input example/input/ \
+  --output example/output/

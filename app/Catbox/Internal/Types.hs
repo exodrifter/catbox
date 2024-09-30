@@ -4,7 +4,8 @@ module Catbox.Internal.Types
 
 -- Parts of the graph
 , Input(inputName, inputType)
-, Node(nodeId, nodeFunction, nodeParameters)
+, Node(nodeId, nodeType, nodeParameters)
+, NodeType(..)
 , Output(outputName, outputParameter)
 , Parameter(parameterName, parameterSource)
 , ParameterSource(..)
@@ -60,7 +61,7 @@ inputCodec =
 data Node =
   Node
     { nodeId :: Text
-    , nodeFunction :: Text
+    , nodeType :: NodeType
     , nodeParameters :: [Parameter]
     }
 
@@ -68,8 +69,24 @@ nodeCodec :: TomlCodec Node
 nodeCodec =
   Node
     <$> Toml.text "id" .= nodeId
-    <*> Toml.text "function" .= nodeFunction
+    <*> Toml.table nodeTypeCodec "type" .= nodeType
     <*> Toml.list parameterCodec "parameters" .= nodeParameters
+
+data NodeType =
+    NodeFunction Text
+  | NodeGraph Text
+
+nodeTypeCodec :: TomlCodec NodeType
+nodeTypeCodec =
+  let
+    matchFunction (NodeFunction name) = Just name
+    matchFunction _ = Nothing
+
+    matchGraph (NodeGraph path) = Just path
+    matchGraph _ = Nothing
+
+  in    Toml.dimatch matchFunction NodeFunction (Toml.text "function")
+    <|> Toml.dimatch matchGraph NodeGraph (Toml.text "graph")
 
 data Parameter =
   Parameter
@@ -147,7 +164,7 @@ valueCodec =
     matchCText _ = Nothing
 
   in    Toml.dimatch matchCFile CFile (Toml.table fileCodec "file")
-    <|> Toml.dimatch matchCFilePath CFilePath (Toml.string "file_path")
+    <|> Toml.dimatch matchCFilePath CFilePath (Toml.string "path")
     <|> Toml.dimatch matchCPandoc CPandoc pandocCodec
     <|> Toml.dimatch matchCText CText (Toml.text "text")
 

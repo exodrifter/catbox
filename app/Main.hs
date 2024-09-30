@@ -26,7 +26,7 @@ main = do
       ( fullDesc
      <> progDesc "Process a set of documents using a catbox graph."
      <> header "catbox - document transformation application" )
-  Options {..} <- firstExecParser opts
+  Options {..} <- execParser opts
 
   -- Read the graph
   file <- TIO.readFile graphPath
@@ -48,10 +48,7 @@ main = do
 
 createCatboxState :: FilePath -> Graph -> IO CatboxState
 createCatboxState inputDirectory graph = do
-  let
-    inputs = graphInputs graph
-    graphOpts = info (catboxParser <**> inputsParser inputs <**> helper) fullDesc
-  catboxResults <- execParser graphOpts
+  let catboxResults = Map.empty
 
   paths <- listFilesRecursive inputDirectory ""
   catboxFiles <- loadFiles inputDirectory paths
@@ -136,16 +133,6 @@ data Options =
     , outputDirectory :: FilePath
     }
 
--- We only want to consider the first two positional arguments the first time
--- we parse the command line options, because we don't know what the flags are
--- until the graph is read. This is because we generate flags based on what the
--- input values for the graph are.
-firstExecParser :: ParserInfo a -> IO a
-firstExecParser pinfo = do
-  args <- getArgs
-  handleParseResult $
-    execParserPure defaultPrefs pinfo (take 5 args)
-
 catboxParser :: Parser Options
 catboxParser = do
   graphPath <- argument str (metavar "GRAPH")
@@ -162,42 +149,6 @@ catboxParser = do
       <> help "The path to the output directory."
       )
   pure Options { .. }
-
-inputsParser :: [Input] -> Parser (Options -> Results)
-inputsParser inputs = do
-  results <- traverse inputParser inputs
-  pure (const $ Map.unions results)
-
-inputParser :: Input -> Parser Results
-inputParser input =
-  case inputType input of
-    "text" -> do
-      value <- strOption
-          ( long (T.unpack (inputName input))
-         <> metavar "VALUE"
-         <> help "string value" )
-      pure $
-        Map.singleton
-          (Key ("in." <> inputName input))
-          (CText value)
-    "path" -> do
-      path <- strOption
-          ( long (T.unpack (inputName input))
-         <> metavar "VALUE"
-         <> help "path" )
-      pure $
-        Map.singleton
-          (Key ("in." <> inputName input))
-          (CFilePath path)
-    "file" -> do
-      path <- strOption
-          ( long (T.unpack (inputName input))
-         <> metavar "VALUE"
-         <> help "path" )
-      pure $
-        Map.singleton
-          (Key ("in." <> inputName input))
-          (CFile (File path "")) -- Read the file later
 
 -------------------------------------------------------------------------------
 -- Program functions
@@ -235,6 +186,6 @@ processNode node = do
   args <- resolveParameters (nodeParameters node)
   invoke
     (baseFunctions <> pandocFunctions)
-    (nodeFunction node)
+    (nodeType node)
     args
     (Key (nodeId node))

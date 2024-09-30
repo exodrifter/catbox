@@ -3,43 +3,43 @@ name = "path"
 type = "path"
 
 [[nodes]]
-id = "file"
-function = "file_contents"
+id = "read"
+type = { function = "file_contents" }
 parameters = [ { name = "path", key = "in.path" } ]
 
 [[nodes]]
 id = "upper"
-function = "uppercase"
-parameters = [ { name = "text", key = "file.result" } ]
+type = { function = "uppercase" }
+parameters = [ { name = "text", key = "read.text" } ]
 
 [[nodes]]
 id = "lower"
-function = "lowercase"
-parameters = [ { name = "text", key = "file.result" } ]
+type = { function = "lowercase" }
+parameters = [ { name = "text", key = "read.text" } ]
 
 [[nodes]]
 id = "concat"
-function = "concat"
+type = { function = "concat" }
 parameters = [ { name = "a", key = "upper.result" }, { name = "b", key = "lower.result" } ]
 
 [[nodes]]
 id = "parse"
-function = "parse_markdown"
+type = { function = "parse_markdown" }
 parameters = [ { name = "text", key = "concat.result" } ]
 
 [[nodes]]
 id = "render"
-function = "render_html5"
+type = { function = "render_html5" }
 parameters = [ { name = "pandoc", key = "parse.result" } ]
 
 [[nodes]]
 id = "new_path"
-function = "change_extension"
-parameters = [ { name="extension", text = "html" }, { name="path", key = "in.path" } ]
+type = { function = "change_extension" }
+parameters = [ { name = "extension", text = "html" }, { name="path", key = "read.path" } ]
 
 [[nodes]]
 id = "output"
-function = "make_file"
+type = { function = "make_file" }
 parameters = [ { name = "path", key = "new_path.result" }, { name = "text", key = "render.result" } ]
 
 [[out]]

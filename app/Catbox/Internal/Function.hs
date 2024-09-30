@@ -27,11 +27,16 @@ data Function =
 -- function helpers
 -------------------------------------------------------------------------------
 
-invoke :: Map Text Function -> Text -> Map Text Value -> Key -> Catbox Text ()
-invoke functions name params key =
-  case Map.lookup name functions of
-    Nothing -> throwError ("Cannot find function \"" <> name <> "\"")
-    Just fn -> functionExec fn params key
+invoke :: Map Text Function -> NodeType -> Map Text Value -> Key -> Catbox Text ()
+invoke functions nodeType params key =
+  case nodeType of
+    NodeFunction name ->
+      case Map.lookup name functions of
+        Nothing -> throwError ("Cannot find function \"" <> name <> "\"")
+        Just fn -> functionExec fn params key
+
+    NodeGraph _path ->
+      throwError "Sub graphs are not implemented yet!"
 
 getFile :: Text -> Map Text Value -> Catbox Text File
 getFile name params =

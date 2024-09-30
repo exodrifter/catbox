@@ -1,0 +1,8 @@
+[[nodes]]
+id = "ssg"
+type = { graph = "ssg.toml" }
+parameters = [ { name = "path", path = "input.md" } ]
+
+[[out]]
+name = "file"
+key = "ssg.file"
