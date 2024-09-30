@@ -41,8 +41,7 @@ main = do
         Just graph -> do
           -- Execute graph and print result
           let
-            functions = baseFunctions <> fileFunctions <> pandocFunctions <> pathFunctions
-            result = processGraph graphPath functions graph initialState
+            result = processGraph graphPath standardFunctions graph initialState
           case result of
             Left errs -> do
               TIO.putStrLn ("FAILED! " <> errs)
