@@ -2,6 +2,7 @@
 module Main where
 
 import Prelude hiding (id)
+import Catbox.Function
 import Catbox.Internal
 import Options.Applicative
 

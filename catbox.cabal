@@ -23,11 +23,12 @@ executable catbox
     import: warnings
     main-is: Main.hs
     other-modules:
+      Catbox.Function
+      Catbox.Function.Base
+      Catbox.Function.Pandoc
       Catbox.Internal
-      Catbox.Internal.Base
       Catbox.Internal.Function
       Catbox.Internal.Monad
-      Catbox.Internal.Pandoc
       Catbox.Internal.Types
 
     default-extensions:

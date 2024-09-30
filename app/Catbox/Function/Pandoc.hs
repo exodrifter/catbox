@@ -1,4 +1,4 @@
-module Catbox.Internal.Pandoc
+module Catbox.Function.Pandoc
 ( pandocFunctions
 ) where
 

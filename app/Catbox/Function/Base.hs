@@ -1,4 +1,4 @@
-module Catbox.Internal.Base
+module Catbox.Function.Base
 ( baseFunctions
 ) where
 
