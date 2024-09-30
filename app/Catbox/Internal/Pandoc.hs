@@ -18,42 +18,35 @@ pandocFunctions =
     , renderHtml5Function
     ]
 
-runPandocPure :: Pandoc.PandocPure a -> Either Pandoc.PandocError a
-runPandocPure =
-    runIdentity
-  . flip evalStateT Pandoc.def
-  . flip evalStateT Pandoc.def
-  . runExceptT
-  . Pandoc.unPandocPure
+runPandocPure :: Pandoc.PandocPure a -> Catbox Text a
+runPandocPure pandoc =
+  let
+    result =
+        runIdentity
+      . flip evalStateT Pandoc.def
+      . flip evalStateT Pandoc.def
+      . runExceptT
+      $ Pandoc.unPandocPure pandoc
+  in
+    case result of
+      Left err -> throwError (Pandoc.renderError err)
+      Right a -> pure a
 
 parseMarkdownFunction :: Function
 parseMarkdownFunction =
   Function { functionName = "parse_markdown", .. }
   where
-    functionExec params key =
-      case getText "text" params of
-        Left err -> pure (Left err)
-        Right text -> do
-          case runPandocPure (Pandoc.readMarkdown Pandoc.def text) of
-            Left err -> pure (Left (Pandoc.renderError err))
-            Right pandoc -> do
-              insertKey
-                (key <> ".result")
-                (CPandoc pandoc)
-              pure (Right ())
+    functionExec params key = do
+      text <- getText "text" params
+      pandoc <- runPandocPure (Pandoc.readMarkdown Pandoc.def text)
+      insertKey (key <> ".result") (CPandoc pandoc)
 
 renderHtml5Function :: Function
 renderHtml5Function =
   Function { functionName = "render_html5", .. }
   where
-    functionExec params key =
-      case getPandoc "pandoc" params of
-        Left err -> pure (Left err)
-        Right pandoc -> do
-          case runPandocPure (Pandoc.writeHtml5 Pandoc.def pandoc) of
-            Left err -> pure (Left (Pandoc.renderError err))
-            Right html -> do
-              insertKey
-                (key <> ".result")
-                (CText (TL.toStrict (Blaze.renderHtml html)))
-              pure (Right ())
+    functionExec params key = do
+      pandoc <- getPandoc "pandoc" params
+      html <- runPandocPure (Pandoc.writeHtml5 Pandoc.def pandoc)
+      let text = TL.toStrict (Blaze.renderHtml html)
+      insertKey (key <> ".result") (CText text)

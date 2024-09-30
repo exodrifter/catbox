@@ -2,6 +2,9 @@ module Catbox.Internal.Monad
 ( Catbox
 , evalCatbox
 , runCatbox
+, mapError
+, throwError
+, tryError
 
 -- Helper functions
 , insertKey
@@ -10,9 +13,10 @@ module Catbox.Internal.Monad
 ) where
 
 import Catbox.Internal.Types
+import Control.Monad.Except (MonadError, mapError, throwError, tryError)
 import qualified Data.Map as Map
 
-newtype Catbox a = Catbox (StateT Results Identity a)
+newtype Catbox e a = Catbox (ExceptT e (StateT Results Identity) a)
   deriving newtype
     ( Applicative
     , Functor
@@ -20,44 +24,41 @@ newtype Catbox a = Catbox (StateT Results Identity a)
     )
   deriving
     ( MonadState Results
+    , MonadError e
     )
 
-evalCatbox :: Catbox a -> Results -> a
-evalCatbox (Catbox stateT) =
-  runIdentity . evalStateT stateT
+evalCatbox :: Catbox e a -> Results -> Either e a
+evalCatbox (Catbox catbox) results =
+  runIdentity . flip evalStateT results $ runExceptT catbox
 
-runCatbox :: Catbox a -> Results -> (a, Results)
-runCatbox (Catbox stateT) =
-  runIdentity . runStateT stateT
+runCatbox :: Catbox e a -> Results -> (Either e a, Results)
+runCatbox (Catbox catbox) results =
+  runIdentity . flip runStateT results $ runExceptT catbox
 
 -------------------------------------------------------------------------------
 -- Helper Functions
 -------------------------------------------------------------------------------
 
-insertKey :: Key -> Value -> Catbox ()
+insertKey :: Key -> Value -> Catbox e ()
 insertKey key value = do
   results <- get
   put (Map.insert key value results)
 
-resolveParameters :: [Parameter] -> Catbox (Either [Text] (Map Text Value))
+resolveParameters :: [Parameter] -> Catbox Text (Map Text Value)
 resolveParameters parameters = do
   results <- traverse resolveParameter parameters
-  case partitionEithers results of
-    ([], results) ->
-      pure (Right (Map.fromList results))
-    (errors, _) ->
-      pure (Left errors)
+  pure (Map.fromList results)
 
-resolveParameter :: Parameter -> Catbox (Either Text (Text, Value))
+resolveParameter :: Parameter -> Catbox Text (Text, Value)
 resolveParameter parameter = do
   case parameterSource parameter of
     Constant const ->
-      pure (Right (parameterName parameter, const))
+      pure (parameterName parameter, const)
     Connection key -> do
       results <- get
       case Map.lookup key results of
         Nothing ->
-          pure (Left ("Cannot find " <> keyToText key))
+          throwError ("Cannot find " <> keyToText key)
         Just value ->
-          pure (Right (parameterName parameter, value))
+          pure (parameterName parameter, value)
 

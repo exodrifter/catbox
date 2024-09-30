@@ -16,6 +16,7 @@ import qualified System.FilePath as FilePath
 import qualified Text.Blaze.Html.Renderer.Text as Blaze
 import qualified Text.Pandoc as Pandoc
 import qualified Toml
+import Catbox.Internal.Monad (runCatbox)
 
 main :: IO ()
 main = do
@@ -56,8 +57,7 @@ main = do
       let (result, newValues) = runCatbox (processNodes (graphNodes graph)) inputs
       case result of
         Left errs -> do
-          TIO.putStrLn "FAILED!"
-          traverse_ TIO.putStrLn errs
+          TIO.putStrLn ("FAILED! " <> errs)
         Right result -> do
           processResults outputDirectory newValues (graphOutputs graph)
 
@@ -173,42 +173,36 @@ inputParser input =
 
 -- Tries to process the output of all nodes in the graph. Returns an error if
 -- it fails to do so.
-processNodes :: [Node] -> Catbox (Either [Text] ())
+processNodes :: [Node] -> Catbox Text ()
 processNodes nodes = do
-  results <- traverse processNode nodes
-  case partitionEithers results of
-
-    -- Nothing happened because all nodes have been processed; we're done!
-    ([], []) ->
-      pure (Right ())
-
-    -- We still have nodes to process, but we were also unable to process any
-    -- of them.
-    (later, []) ->
-      pure (Left (concatMap snd later))
-
-    -- We were able to process some nodes, so lets try the ones that failed
-    -- again.
-    (later, _) ->
-      processNodes (fst <$> later)
-
-processNode :: Node -> Catbox (Either (Node, [Text]) ())
-processNode node = do
-  results <- resolveParameters (nodeParameters node)
-  case results of
-
-    -- We failed to find all of the inputs required for this node.
-    Left errs ->
-      pure (Left (node, errs))
-
-    -- We found all the required inputs, lets run the function now!
-    Right args -> do
-      result <-
-        invoke
-          (baseFunctions <> pandocFunctions)
-          (nodeFunction node)
-          args
-          (Key (nodeId node))
+  let
+    tryExec :: [(Node, Text)] -> Node -> Catbox Text [(Node, Text)]
+    tryExec failed node = do
+      result <- tryError (processNode node)
       case result of
-        Left err -> pure (Left (node, [err]))
-        Right a -> pure (Right a)
+        Left err -> pure ((node, err):failed)
+        Right () -> pure failed
+
+  failed <- foldlM tryExec [] nodes
+
+  case failed of
+    -- Finished processing all nodes
+    [] -> pure ()
+
+    (node, e):_
+      -- We were unable to process any of the nodes.
+      | length failed == length nodes ->
+        throwError e -- TODO: Return all of the errors
+
+      -- Some succeeded, try again
+      | otherwise ->
+        processNodes (fst <$> failed)
+
+processNode :: Node -> Catbox Text ()
+processNode node = do
+  args <- resolveParameters (nodeParameters node)
+  invoke
+    (baseFunctions <> pandocFunctions)
+    (nodeFunction node)
+    args
+    (Key (nodeId node))

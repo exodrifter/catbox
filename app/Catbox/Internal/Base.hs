@@ -24,97 +24,64 @@ changeExtensionFunction :: Function
 changeExtensionFunction =
   Function { functionName = "change_extension", .. }
   where
-    functionExec params key =
-      let
-        parse =
-          (,)
-            <$> getText "extension" params
-            <*> getFilePath "path" params
-      in
-        case parse of
-          Left err -> pure (Left err)
-          Right (extension, path) -> do
-            insertKey
-              (key <> ".result")
-              (CFilePath (FilePath.replaceExtension path (T.unpack extension)))
-            pure (Right ())
+    functionExec params key = do
+      extension <- getText "extension" params
+      path <- getFilePath "path" params
+      insertKey
+        (key <> ".result")
+        (CFilePath (FilePath.replaceExtension path (T.unpack extension)))
 
 concatFunction :: Function
 concatFunction =
   Function { functionName = "concat", .. }
   where
-    functionExec params key =
-      let
-        parse =
-          (,)
-            <$> getText "a" params
-            <*> getText "b" params
-      in
-        case parse of
-          Left err -> pure (Left err)
-          Right (a, b) -> do
-            insertKey
-              (key <> ".result")
-              (CText (a <> b))
-            pure (Right ())
+    functionExec params key = do
+      a <- getText "a" params
+      b <- getText "b" params
+      insertKey
+        (key <> ".result")
+        (CText (a <> b))
 
 lowercaseFunction :: Function
 lowercaseFunction =
   Function { functionName = "lowercase", .. }
   where
-    functionExec params key =
-      case getText "text" params of
-        Left err -> pure (Left err)
-        Right text -> do
-          insertKey
-            (key <> ".result")
-            (CText (T.toLower text))
-          pure (Right ())
+    functionExec params key = do
+      text <- getText "text" params
+      insertKey
+        (key <> ".result")
+        (CText (T.toLower text))
 
 makeFileFunction :: Function
 makeFileFunction =
   Function { functionName = "make_file", .. }
   where
-    functionExec params key =
-      let
-        parse =
-          (,)
-            <$> getFilePath "path" params
-            <*> getText "text" params
-      in
-        case parse of
-          Left err -> pure (Left err)
-          Right (path, text) -> do
-            insertKey
-              (key <> ".result")
-              (CFile (File path text))
-            pure (Right ())
+    functionExec params key = do
+      path <- getFilePath "path" params
+      text <- getText "text" params
+      insertKey
+        (key <> ".result")
+        (CFile (File path text))
 
 readFileFunction :: Function
 readFileFunction =
   Function { functionName = "read_file", .. }
   where
-    functionExec params key =
-      case getFile "file" params of
-        Left err -> pure (Left err)
-        Right file -> do
-          insertKey
-            (key <> ".text")
-            (CText (fileText file))
-          insertKey
-            (key <> ".path")
-            (CFilePath (filePath file))
-          pure (Right ())
+    functionExec params key = do
+      file <- getFile "file" params
+      insertKey
+        (key <> ".text")
+        (CText (fileText file))
+      insertKey
+        (key <> ".path")
+        (CFilePath (filePath file))
 
 uppercaseFunction :: Function
 uppercaseFunction =
   Function { functionName = "uppercase", .. }
   where
-    functionExec params key =
-      case getText "text" params of
-        Left err -> pure (Left err)
-        Right text -> do
-          insertKey
-            (key <> ".result")
-            (CText (T.toUpper text))
-          pure (Right ())
+    functionExec params key = do
+      text <- getText "text" params
+      insertKey
+        (key <> ".result")
+        (CText (T.toUpper text))

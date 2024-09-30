@@ -20,43 +20,43 @@ import qualified Type.Reflection as Reflection
 data Function =
   Function
     { functionName :: Text
-    , functionExec :: Map Text Value -> Key -> Catbox (Either Text ())
+    , functionExec :: Map Text Value -> Key -> Catbox Text ()
     }
 
 -------------------------------------------------------------------------------
 -- function helpers
 -------------------------------------------------------------------------------
 
-invoke :: Map Text Function -> Text -> Map Text Value -> Key -> Catbox (Either Text ())
+invoke :: Map Text Function -> Text -> Map Text Value -> Key -> Catbox Text ()
 invoke functions name params key =
   case Map.lookup name functions of
-    Nothing -> pure (Left ("Cannot find function \"" <> name <> "\""))
+    Nothing -> throwError ("Cannot find function \"" <> name <> "\"")
     Just fn -> functionExec fn params key
 
-getFile :: Text -> Map Text Value -> Either Text File
+getFile :: Text -> Map Text Value -> Catbox Text File
 getFile name params =
   case Map.lookup name params of
-    Just (CFile v) -> Right v
-    Just _ -> Left ("Cannot convert parameter " <> name <> " to file")
-    _ -> Left ("Cannot find parameter " <> name)
+    Just (CFile v) -> pure v
+    Just _ -> throwError ("Cannot convert parameter " <> name <> " to file")
+    _ -> throwError ("Cannot find parameter " <> name)
 
-getFilePath :: Text -> Map Text Value -> Either Text FilePath
+getFilePath :: Text -> Map Text Value -> Catbox Text FilePath
 getFilePath name params =
   case Map.lookup name params of
-    Just (CFilePath v) -> Right v
-    Just _ -> Left ("Cannot convert parameter " <> name <> " to file path")
-    _ -> Left ("Cannot find parameter " <> name)
+    Just (CFilePath v) -> pure v
+    Just _ -> throwError ("Cannot convert parameter " <> name <> " to file path")
+    _ -> throwError ("Cannot find parameter " <> name)
 
-getPandoc :: Text -> Map Text Value -> Either Text Pandoc
+getPandoc :: Text -> Map Text Value -> Catbox Text Pandoc
 getPandoc name params =
   case Map.lookup name params of
-    Just (CPandoc v) -> Right v
-    Just _ -> Left ("Cannot convert parameter " <> name <> " to pandoc")
-    _ -> Left ("Cannot find parameter " <> name)
+    Just (CPandoc v) -> pure v
+    Just _ -> throwError ("Cannot convert parameter " <> name <> " to pandoc")
+    _ -> throwError ("Cannot find parameter " <> name)
 
-getText :: Text -> Map Text Value -> Either Text Text
+getText :: Text -> Map Text Value -> Catbox Text Text
 getText name params =
   case Map.lookup name params of
-    Just (CText v) -> Right v
-    Just _ -> Left ("Cannot convert parameter " <> name <> " to text")
-    _ -> Left ("Cannot find parameter " <> name)
+    Just (CText v) -> pure v
+    Just _ -> throwError ("Cannot convert parameter " <> name <> " to text")
+    _ -> throwError ("Cannot find parameter " <> name)
