@@ -41,7 +41,7 @@ main = do
         Just graph -> do
           -- Execute graph and print result
           let
-            functions = baseFunctions <> pandocFunctions <> pathFunctions
+            functions = baseFunctions <> fileFunctions <> pandocFunctions <> pathFunctions
             result = processGraph graphPath functions graph initialState
           case result of
             Left errs -> do

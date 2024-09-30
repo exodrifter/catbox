@@ -25,6 +25,7 @@ executable catbox
     other-modules:
       Catbox.Function
       Catbox.Function.Base
+      Catbox.Function.File
       Catbox.Function.Pandoc
       Catbox.Function.Path
       Catbox.Internal
