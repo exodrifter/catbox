@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingVia #-}
 module Catbox.Internal.Types
 ( Graph(graphInputs, graphNodes, graphOutputs)
 , graphCodec
@@ -27,6 +28,8 @@ import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Builder as TL
 import qualified Data.Text.Encoding as TE
 import qualified Toml
+import Data.Aeson ((.:))
+import qualified Data.Aeson.Types as Aeson
 
 data Graph =
   Graph
@@ -34,6 +37,21 @@ data Graph =
     , graphNodes :: [Node]
     , graphOutputs :: [Output]
     }
+
+instance Aeson.FromJSON Graph where
+  parseJSON = Aeson.withObject "Graph" $ \v -> do
+    Graph
+      <$> v .: "inputs"
+      <*> v .: "nodes"
+      <*> v .: "outputs"
+
+instance Aeson.ToJSON Graph where
+  toJSON v =
+    Aeson.object
+      [ "inputs" Aeson..= graphInputs v
+      , "nodes" Aeson..= graphNodes v
+      , "outputs" Aeson..= graphOutputs v
+      ]
 
 graphCodec :: TomlCodec Graph
 graphCodec =
@@ -52,6 +70,19 @@ data Input =
     , inputType :: Text
     }
 
+instance Aeson.FromJSON Input where
+  parseJSON = Aeson.withObject "Input" $ \v -> do
+    Input
+      <$> v .: "name"
+      <*> v .: "type"
+
+instance Aeson.ToJSON Input where
+  toJSON v =
+    Aeson.object
+      [ "name" Aeson..= inputName v
+      , "type" Aeson..= inputType v
+      ]
+
 inputCodec :: TomlCodec Input
 inputCodec =
   Input
@@ -65,6 +96,21 @@ data Node =
     , nodeParameters :: [Parameter]
     }
 
+instance Aeson.FromJSON Node where
+  parseJSON = Aeson.withObject "Node" $ \v -> do
+    Node
+      <$> v .: "id"
+      <*> v .: "type"
+      <*> v .: "parameters"
+
+instance Aeson.ToJSON Node where
+  toJSON v =
+    Aeson.object
+      [ "id" Aeson..= nodeId v
+      , "type" Aeson..= nodeType v
+      , "parameters" Aeson..= nodeParameters v
+      ]
+
 nodeCodec :: TomlCodec Node
 nodeCodec =
   Node
@@ -75,6 +121,28 @@ nodeCodec =
 data NodeType =
     NodeFunction Text
   | NodeGraph FilePath
+
+instance Aeson.FromJSON NodeType where
+  parseJSON = Aeson.withObject "NodeType" $ \v -> do
+    typ <- v .: "type" :: Aeson.Parser Text
+    case typ of
+      "function" -> NodeFunction <$> v .: "value"
+      "graph" -> NodeGraph <$> v .: "value"
+      _ -> fail "unknown node type type"
+
+instance Aeson.ToJSON NodeType where
+  toJSON v =
+    case v of
+      NodeFunction a ->
+        Aeson.object
+          [ "type" Aeson..= ("function" :: Text)
+          , "value" Aeson..= a
+          ]
+      NodeGraph a ->
+        Aeson.object
+          [ "type" Aeson..= ("graph" :: Text)
+          , "value" Aeson..= a
+          ]
 
 nodeTypeCodec :: TomlCodec NodeType
 nodeTypeCodec =
@@ -94,6 +162,19 @@ data Parameter =
     , parameterSource :: ParameterSource
     }
 
+instance Aeson.FromJSON Parameter where
+  parseJSON = Aeson.withObject "Parameter" $ \v -> do
+    Parameter
+      <$> v .: "name"
+      <*> v .: "source"
+
+instance Aeson.ToJSON Parameter where
+  toJSON v =
+    Aeson.object
+      [ "name" Aeson..= parameterName v
+      , "source" Aeson..= parameterSource v
+      ]
+
 parameterCodec :: TomlCodec Parameter
 parameterCodec =
   Parameter
@@ -103,6 +184,28 @@ parameterCodec =
 data ParameterSource =
     Connection Key
   | Constant Value
+
+instance Aeson.FromJSON ParameterSource where
+  parseJSON = Aeson.withObject "ParameterSource" $ \v -> do
+    typ <- v .: "type" :: Aeson.Parser Text
+    case typ of
+      "connection" -> Connection <$> v .: "value"
+      "constant" -> Constant <$> v .: "value"
+      _ -> fail "unknown parameter source type"
+
+instance Aeson.ToJSON ParameterSource where
+  toJSON v =
+    case v of
+      Connection a ->
+        Aeson.object
+          [ "type" Aeson..= ("connection" :: Text)
+          , "value" Aeson..= a
+          ]
+      Constant a ->
+        Aeson.object
+          [ "type" Aeson..= ("constant" :: Text)
+          , "value" Aeson..= a
+          ]
 
 parameterSourceCodec :: TomlCodec ParameterSource
 parameterSourceCodec =
@@ -123,6 +226,19 @@ data Output =
     , outputParameter :: Parameter
     }
 
+instance Aeson.FromJSON Output where
+  parseJSON = Aeson.withObject "Output" $ \v -> do
+    Output
+      <$> v .: "name"
+      <*> v .: "parameter"
+
+instance Aeson.ToJSON Output where
+  toJSON v =
+    Aeson.object
+      [ "name" Aeson..= outputName v
+      , "parameter" Aeson..= outputParameter v
+      ]
+
 outputCodec :: TomlCodec Output
 outputCodec =
   Output
@@ -139,6 +255,8 @@ type Results = Map Key Value
 -- Represents the key for a result in a node graph.
 newtype Key = Key { keyToText :: Text }
   deriving newtype (Eq, IsString, Ord, Semigroup, Show)
+  deriving Aeson.FromJSON via Text
+  deriving Aeson.ToJSON via Text
 
 -- The different kinds of values you can pass in catbox.
 data Value =
@@ -148,6 +266,46 @@ data Value =
   | CPandoc Pandoc
   | CText Text
   deriving (Eq, Show)
+
+instance Aeson.FromJSON Value where
+  parseJSON = Aeson.withObject "Value" $ \v -> do
+    typ <- v .: "type" :: Aeson.Parser Text
+    case typ of
+      "array" -> CArray <$> v .: "value"
+      "file" -> CFile <$> v .: "value"
+      "path" -> CFilePath <$> v .: "value"
+      "pandoc" -> CPandoc <$> v .: "value"
+      "text" -> CText <$> v .: "value"
+      _ -> fail "unknown value type"
+
+instance Aeson.ToJSON Value where
+  toJSON v =
+    case v of
+      CArray a ->
+        Aeson.object
+          [ "type" Aeson..= ("array" :: Text)
+          , "value" Aeson..= a
+          ]
+      CFile a ->
+        Aeson.object
+          [ "type" Aeson..= ("file" :: Text)
+          , "value" Aeson..= a
+          ]
+      CFilePath a ->
+        Aeson.object
+          [ "type" Aeson..= ("path" :: Text)
+          , "value" Aeson..= a
+          ]
+      CPandoc a ->
+        Aeson.object
+          [ "type" Aeson..= ("pandoc" :: Text)
+          , "value" Aeson..= a
+          ]
+      CText a ->
+        Aeson.object
+          [ "type" Aeson..= ("text" :: Text)
+          , "value" Aeson..= a
+          ]
 
 valueCodec :: TomlCodec Value
 valueCodec =
@@ -190,6 +348,19 @@ data File =
     , fileText :: Text
     }
   deriving (Eq, Show)
+
+instance Aeson.FromJSON File where
+  parseJSON = Aeson.withObject "File" $ \v ->
+    File
+      <$> v .: "path"
+      <*> v .: "text"
+
+instance Aeson.ToJSON File where
+  toJSON v =
+    Aeson.object
+      [ "path" Aeson..= filePath v
+      , "text" Aeson..= fileText v
+      ]
 
 fileCodec :: TomlCodec File
 fileCodec =
