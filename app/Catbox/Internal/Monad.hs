@@ -87,8 +87,8 @@ getGraph path = do
 
 insertKey :: Key -> Value -> Catbox e ()
 insertKey key value = do
-  state <- get
-  put state { catboxResults = Map.insert key value (catboxResults state) }
+  s <- get
+  put s { catboxResults = Map.insert key value (catboxResults s) }
 
 resolveParameters :: [Parameter] -> Catbox Text (Map Text Value)
 resolveParameters parameters = do
@@ -98,8 +98,8 @@ resolveParameters parameters = do
 resolveParameter :: Parameter -> Catbox Text (Text, Value)
 resolveParameter parameter = do
   case parameterSource parameter of
-    Constant const ->
-      pure (parameterName parameter, const)
+    Constant c ->
+      pure (parameterName parameter, c)
     Connection key -> do
       results <- gets catboxResults
       case Map.lookup key results of

@@ -20,12 +20,12 @@ processGraph path functions graph initialState = do
 
 -- Write results to disk and buffer only if all outputs are available.
 extractResults :: CatboxState -> [Output] -> Either Text (Map Text Value)
-extractResults state outputs = do
+extractResults s outputs = do
   let
     loadResult :: Output -> Either Text (Text, Value)
     loadResult output =
       (\(_, v) -> (outputName output, v)) <$>
-        evalCatbox (resolveParameter (outputParameter output)) state
+        evalCatbox (resolveParameter (outputParameter output)) s
 
   case partitionEithers (loadResult <$> outputs) of
     -- All of the results are available
@@ -52,7 +52,7 @@ processNodes path functions nodes = do
     -- Finished processing all nodes
     [] -> pure ()
 
-    (node, e):_
+    (_, e):_
       -- We were unable to process any of the nodes.
       | length failed == length nodes ->
         throwError e -- TODO: Return all of the errors

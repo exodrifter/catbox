@@ -6,7 +6,6 @@ import Catbox.Internal.Function
 import Catbox.Internal.Monad
 import Catbox.Internal.Types
 import qualified Data.Map as Map
-import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Text.Blaze.Html.Renderer.Text as Blaze
 import qualified Text.Pandoc as Pandoc

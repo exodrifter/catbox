@@ -35,9 +35,7 @@ main = do
 
         Just graph -> do
           -- Execute graph and print result
-          let
-            result = processGraph graphPath standardFunctions graph initialState
-          case result of
+          case processGraph graphPath standardFunctions graph initialState of
             Left errs -> do
               TIO.putStrLn ("FAILED! " <> errs)
             Right finalState -> do
@@ -114,15 +112,17 @@ processResults outputDirectory outputs = do
   traverse_ (processResult outputDirectory) (Map.toList outputs)
 
 processResult :: FilePath -> (Text, Value) -> IO ()
-processResult outputDirectory (outputName, value) = do
+processResult outputDirectory (outputName, v) = do
   let
-    printDebug value =
-      TIO.putStrLn (outputName <> " = " <> T.pack (show value))
+    printDebug :: (Show a) => a -> IO ()
+    printDebug a =
+      TIO.putStrLn (outputName <> " = " <> T.pack (show a))
 
-  case value of
-    CText value -> printDebug value
-    CFilePath value -> printDebug value
-    CPandoc value -> printDebug value
+  case v of
+    CArray a -> printDebug a
+    CText a -> printDebug a
+    CFilePath a -> printDebug a
+    CPandoc a -> printDebug a
 
     CFile (File path text) -> do
       let

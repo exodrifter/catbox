@@ -11,7 +11,7 @@ module Catbox.Internal.Types
 , ParameterSource(..)
 
 -- Primitive types used by the graph
-, Results(..)
+, Results
 , Key(..)
 , Value(..)
 , File(..)

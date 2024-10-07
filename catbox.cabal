@@ -12,12 +12,6 @@ category: Web
 build-type: Simple
 extra-doc-files: CHANGELOG.md
 
-common warnings
-    ghc-options:
-      -Wall
-      -Wcompat
-      -Werror
-
 executable catbox
     default-language: Haskell2010
     import: warnings
@@ -34,6 +28,11 @@ executable catbox
       Catbox.Internal.Function
       Catbox.Internal.Monad
       Catbox.Internal.Types
+
+    ghc-options:
+      -Wall
+      -Wcompat
+      -Werror
 
     default-extensions:
       BlockArguments,

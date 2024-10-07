@@ -6,8 +6,6 @@ import Catbox.Internal.Function
 import Catbox.Internal.Monad
 import Catbox.Internal.Types
 import qualified Data.Map as Map
-import qualified Data.Text as T
-import qualified System.FilePath as FilePath
 
 fileFunctions :: Map Text Function
 fileFunctions =

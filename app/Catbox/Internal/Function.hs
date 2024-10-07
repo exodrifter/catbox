@@ -11,9 +11,6 @@ import Catbox.Internal.Types
 
 import Text.Pandoc (Pandoc)
 import qualified Data.Map as Map
-import qualified Data.Text as T
-import qualified Data.Dynamic as Dynamic
-import qualified Type.Reflection as Reflection
 
 data Function =
   Function
