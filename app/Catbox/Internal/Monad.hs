@@ -8,6 +8,7 @@ module Catbox.Internal.Monad
 , tryError
 
 -- File Functions
+, getFilePaths
 , getFileContents
 
 -- Graph Functions
@@ -56,6 +57,11 @@ runCatbox (Catbox catbox) results =
 -------------------------------------------------------------------------------
 -- File Functions
 -------------------------------------------------------------------------------
+
+getFilePaths :: FilePath -> Catbox e [FilePath]
+getFilePaths path = do
+  files <- gets catboxFiles
+  pure (filter (path `isPrefixOf`) (Map.keys files))
 
 getFileContents :: FilePath -> Catbox Text Text
 getFileContents path = do
