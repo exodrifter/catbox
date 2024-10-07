@@ -118,12 +118,16 @@ processResult outputDirectory (outputName, v) = do
     printDebug a =
       TIO.putStrLn (outputName <> " = " <> T.pack (show a))
 
+  -- Print the results to standard out
   case v of
-    CArray a -> printDebug a
-    CText a -> printDebug a
-    CFilePath a -> printDebug a
+    CFile _ -> pure ()
+    CList a -> printDebug a
     CPandoc a -> printDebug a
+    CPath a -> printDebug a
+    CText a -> printDebug a
 
+  -- Write results to filesystem
+  case v of
     CFile (File path text) -> do
       let
         outputPath = FilePath.combine outputDirectory path
@@ -131,6 +135,10 @@ processResult outputDirectory (outputName, v) = do
         True
         (FilePath.takeDirectory outputPath)
       TIO.writeFile outputPath text
+    CList _ -> pure ()
+    CPandoc _ -> pure ()
+    CPath _ -> pure ()
+    CText _ -> pure ()
 
 -------------------------------------------------------------------------------
 -- Command line parsing

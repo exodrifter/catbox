@@ -193,10 +193,10 @@ newtype Key = Key { keyToText :: Text }
 
 -- The different kinds of values you can pass in catbox.
 data Value =
-    CArray [Value]
-  | CFile File
-  | CFilePath FilePath
+    CFile File
+  | CList [Value]
   | CPandoc Pandoc
+  | CPath FilePath
   | CText Text
   deriving (Eq, Show)
 
@@ -204,34 +204,34 @@ instance Aeson.FromJSON Value where
   parseJSON = Aeson.withObject "Value" $ \v -> do
     typ <- v .: "type" :: Aeson.Parser Text
     case typ of
-      "array" -> CArray <$> v .: "value"
       "file" -> CFile <$> v .: "value"
-      "path" -> CFilePath <$> v .: "value"
+      "list" -> CList <$> v .: "value"
       "pandoc" -> CPandoc <$> v .: "value"
+      "path" -> CPath <$> v .: "value"
       "text" -> CText <$> v .: "value"
       _ -> fail "unknown value type"
 
 instance Aeson.ToJSON Value where
   toJSON v =
     case v of
-      CArray a ->
-        Aeson.object
-          [ "type" .= ("array" :: Text)
-          , "value" .= a
-          ]
       CFile a ->
         Aeson.object
           [ "type" .= ("file" :: Text)
           , "value" .= a
           ]
-      CFilePath a ->
+      CList a ->
         Aeson.object
-          [ "type" .= ("path" :: Text)
+          [ "type" .= ("list" :: Text)
           , "value" .= a
           ]
       CPandoc a ->
         Aeson.object
           [ "type" .= ("pandoc" :: Text)
+          , "value" .= a
+          ]
+      CPath a ->
+        Aeson.object
+          [ "type" .= ("path" :: Text)
           , "value" .= a
           ]
       CText a ->

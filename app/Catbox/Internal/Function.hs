@@ -1,7 +1,7 @@
 module Catbox.Internal.Function
 ( Function(..)
 , getFile
-, getFilePath
+, getPath
 , getPandoc
 , getText
 ) where
@@ -29,10 +29,10 @@ getFile name params =
     Just _ -> throwError ("Cannot convert parameter " <> name <> " to file")
     _ -> throwError ("Cannot find parameter " <> name)
 
-getFilePath :: Text -> Map Text Value -> Catbox Text FilePath
-getFilePath name params =
+getPath :: Text -> Map Text Value -> Catbox Text FilePath
+getPath name params =
   case Map.lookup name params of
-    Just (CFilePath v) -> pure v
+    Just (CPath v) -> pure v
     Just _ -> throwError ("Cannot convert parameter " <> name <> " to file path")
     _ -> throwError ("Cannot find parameter " <> name)
 
