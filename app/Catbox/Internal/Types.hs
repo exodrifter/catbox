@@ -310,9 +310,6 @@ instance Aeson.ToJSON Value where
 valueCodec :: TomlCodec Value
 valueCodec =
   let
-    matchCArray (CArray v) = Just v
-    matchCArray _ = Nothing
-
     matchCFile (CFile v) = Just v
     matchCFile _ = Nothing
 
@@ -325,8 +322,7 @@ valueCodec =
     matchCText (CText v) = Just v
     matchCText _ = Nothing
 
-  in    Toml.dimatch matchCArray CArray (Toml.list valueCodec "array")
-    <|> Toml.dimatch matchCFile CFile (Toml.table fileCodec "file")
+  in    Toml.dimatch matchCFile CFile (Toml.table fileCodec "file")
     <|> Toml.dimatch matchCFilePath CFilePath (Toml.string "path")
     <|> Toml.dimatch matchCPandoc CPandoc pandocCodec
     <|> Toml.dimatch matchCText CText (Toml.text "text")

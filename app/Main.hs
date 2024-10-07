@@ -6,18 +6,22 @@ import Catbox.Function
 import Catbox.Internal
 import Options.Applicative
 
+import Catbox.Internal.Monad (runCatbox)
 import Toml (TomlParseError (..), pretty)
+import qualified Control.Exception as Toml
+import qualified Data.Aeson as Aeson
+import qualified Data.ByteString.Lazy as BSL
 import qualified Data.List as List
 import qualified Data.Map as Map
 import qualified Data.Text as T
-import qualified Data.Text.Lazy as TL
+import qualified Data.Text.Encoding as TE
 import qualified Data.Text.IO as TIO
+import qualified Data.Text.Lazy as TL
 import qualified System.Directory as Directory
 import qualified System.FilePath as FilePath
 import qualified Text.Blaze.Html.Renderer.Text as Blaze
 import qualified Text.Pandoc as Pandoc
 import qualified Toml
-import Catbox.Internal.Monad (runCatbox)
 
 main :: IO ()
 main = do
@@ -47,6 +51,16 @@ main = do
               TIO.putStrLn ("FAILED! " <> errs)
             Right finalState -> do
               processResults outputDirectory finalState
+
+convertGraph :: FilePath -> IO ()
+convertGraph path = do
+  file <- TIO.readFile path
+  case Toml.decode graphCodec file of
+    Left msgs -> do
+      fail (T.unpack (Toml.prettyTomlDecodeErrors msgs))
+    Right graph -> do
+      let text = TE.decodeUtf8 (BSL.toStrict (Aeson.encode graph))
+      TIO.writeFile (FilePath.replaceExtension path ".json") text
 
 createCatboxState :: FilePath -> FilePath -> IO (Either [Text] CatboxState)
 createCatboxState inputDirectory graphPath = do

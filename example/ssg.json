@@ -1,0 +1,194 @@
+{
+    "inputs": [
+        {
+            "name": "path",
+            "type": "path"
+        }
+    ],
+    "nodes": [
+        {
+            "id": "read",
+            "parameters": [
+                {
+                    "name": "path",
+                    "source": {
+                        "type": "connection",
+                        "value": "in.path"
+                    }
+                }
+            ],
+            "type": {
+                "type": "function",
+                "value": "file_contents"
+            }
+        },
+        {
+            "id": "upper",
+            "parameters": [
+                {
+                    "name": "text",
+                    "source": {
+                        "type": "connection",
+                        "value": "read.result"
+                    }
+                }
+            ],
+            "type": {
+                "type": "function",
+                "value": "uppercase"
+            }
+        },
+        {
+            "id": "lower",
+            "parameters": [
+                {
+                    "name": "text",
+                    "source": {
+                        "type": "connection",
+                        "value": "read.result"
+                    }
+                }
+            ],
+            "type": {
+                "type": "function",
+                "value": "lowercase"
+            }
+        },
+        {
+            "id": "concat",
+            "parameters": [
+                {
+                    "name": "a",
+                    "source": {
+                        "type": "connection",
+                        "value": "upper.result"
+                    }
+                },
+                {
+                    "name": "b",
+                    "source": {
+                        "type": "connection",
+                        "value": "lower.result"
+                    }
+                }
+            ],
+            "type": {
+                "type": "function",
+                "value": "concat"
+            }
+        },
+        {
+            "id": "parse",
+            "parameters": [
+                {
+                    "name": "text",
+                    "source": {
+                        "type": "connection",
+                        "value": "concat.result"
+                    }
+                }
+            ],
+            "type": {
+                "type": "function",
+                "value": "parse_markdown"
+            }
+        },
+        {
+            "id": "render",
+            "parameters": [
+                {
+                    "name": "pandoc",
+                    "source": {
+                        "type": "connection",
+                        "value": "parse.result"
+                    }
+                }
+            ],
+            "type": {
+                "type": "function",
+                "value": "render_html5"
+            }
+        },
+        {
+            "id": "new_path",
+            "parameters": [
+                {
+                    "name": "extension",
+                    "source": {
+                        "type": "constant",
+                        "value": {
+                            "type": "text",
+                            "value": "html"
+                        }
+                    }
+                },
+                {
+                    "name": "path",
+                    "source": {
+                        "type": "connection",
+                        "value": "in.path"
+                    }
+                }
+            ],
+            "type": {
+                "type": "function",
+                "value": "change_extension"
+            }
+        },
+        {
+            "id": "output",
+            "parameters": [
+                {
+                    "name": "path",
+                    "source": {
+                        "type": "connection",
+                        "value": "new_path.result"
+                    }
+                },
+                {
+                    "name": "text",
+                    "source": {
+                        "type": "connection",
+                        "value": "render.result"
+                    }
+                }
+            ],
+            "type": {
+                "type": "function",
+                "value": "make_file"
+            }
+        }
+    ],
+    "outputs": [
+        {
+            "name": "file",
+            "parameter": {
+                "name": "file",
+                "source": {
+                    "type": "connection",
+                    "value": "output.result"
+                }
+            }
+        },
+        {
+            "name": "path",
+            "parameter": {
+                "name": "path",
+                "source": {
+                    "type": "connection",
+                    "value": "new_path.result"
+                }
+            }
+        },
+        {
+            "name": "text",
+            "parameter": {
+                "name": "text",
+                "source": {
+                    "type": "connection",
+                    "value": "render.result"
+                }
+            }
+        }
+    ]
+}

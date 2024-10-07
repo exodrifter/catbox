@@ -1,0 +1,56 @@
+{
+    "inputs": [],
+    "nodes": [
+        {
+            "id": "ssg",
+            "parameters": [
+                {
+                    "name": "path",
+                    "source": {
+                        "type": "constant",
+                        "value": {
+                            "type": "path",
+                            "value": "input.md"
+                        }
+                    }
+                }
+            ],
+            "type": {
+                "type": "graph",
+                "value": "ssg.json"
+            }
+        }
+    ],
+    "outputs": [
+        {
+            "name": "file",
+            "parameter": {
+                "name": "file",
+                "source": {
+                    "type": "connection",
+                    "value": "ssg.file"
+                }
+            }
+        },
+        {
+            "name": "path",
+            "parameter": {
+                "name": "path",
+                "source": {
+                    "type": "connection",
+                    "value": "ssg.path"
+                }
+            }
+        },
+        {
+            "name": "text",
+            "parameter": {
+                "name": "text",
+                "source": {
+                    "type": "connection",
+                    "value": "ssg.text"
+                }
+            }
+        }
+    ]
+}
