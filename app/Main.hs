@@ -35,7 +35,7 @@ main = do
 
         Just graph -> do
           -- Execute graph and print result
-          case processGraph graphPath graph initialState of
+          case processGraph graph initialState of
             Left errs -> do
               TIO.putStrLn ("FAILED! " <> errs)
             Right finalState -> do
@@ -43,7 +43,9 @@ main = do
 
 createCatboxState :: FilePath -> FilePath -> Map Text Function -> IO (Either [Text] CatboxState)
 createCatboxState inputDirectory graphPath catboxFunctions = do
-  let catboxResults = Map.empty
+  let
+    catboxResults = Map.empty
+    catboxWorkingDirectory = FilePath.takeDirectory graphPath
 
   paths <- listFilesRecursive inputDirectory ""
   catboxFiles <- loadFiles inputDirectory paths

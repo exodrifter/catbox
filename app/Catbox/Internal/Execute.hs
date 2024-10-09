@@ -8,9 +8,9 @@ import qualified Data.Map as Map
 import qualified Data.Text as T
 import qualified System.FilePath as FilePath
 
-processGraph :: FilePath -> Graph -> CatboxState -> Either Text (Map Text Value)
-processGraph path graph initialState = do
-  let catbox = processNodes path (graphNodes graph)
+processGraph :: Graph -> CatboxState -> Either Text (Map Text Value)
+processGraph graph initialState = do
+  let catbox = processNodes (graphNodes graph)
   case runCatbox catbox initialState of
     (Left errs, _) -> Left errs
     (Right (), finalState) ->
@@ -35,12 +35,12 @@ extractResults s outputs = do
 
 -- Tries to process the output of all nodes in the graph. Returns an error if
 -- it fails to do so.
-processNodes :: FilePath -> [Node] -> Catbox Text ()
-processNodes path nodes = do
+processNodes :: [Node] -> Catbox Text ()
+processNodes nodes = do
   let
     tryExec :: [(Node, Text)] -> Node -> Catbox Text [(Node, Text)]
     tryExec failed node = do
-      result <- tryError (processNode path node)
+      result <- tryError (processNode node)
       case result of
         Left err -> pure ((node, err):failed)
         Right () -> pure failed
@@ -58,38 +58,39 @@ processNodes path nodes = do
 
       -- Some succeeded, try again
       | otherwise ->
-        processNodes path (fst <$> failed)
+        processNodes (fst <$> failed)
 
-processNode :: FilePath -> Node -> Catbox Text ()
-processNode path node = do
+processNode :: Node -> Catbox Text ()
+processNode node = do
   args <- resolveParameters (nodeParameters node)
   invoke
-    path
     (nodeType node)
     args
     (Key (nodeId node))
 
-invoke :: FilePath -> NodeType -> Map Text Value -> Key -> Catbox Text ()
-invoke path nodeType params key =
+invoke :: NodeType -> Map Text Value -> Key -> Catbox Text ()
+invoke nodeType params key =
   case nodeType of
     NodeFunction name -> do
       fn <- getFunction name
       functionExec fn params key
 
     NodeGraph graphPath -> do
-      -- The path is relative to the graph we are currently invoking, so we have
-      -- to rewrite the path such that it is relative to our working directory.
-      let newPath = FilePath.combine (FilePath.takeDirectory path) graphPath
+      -- The graph path is relative to the graph we are currently invoking.
+      workingDirectory <- getWorkingDirectory
+      let newPath = FilePath.combine workingDirectory graphPath
       graph <- getGraph newPath
-      initialState <- get
 
-      -- Set the input arguments to the graph
+      -- Set the initial state of the graph.
+      initialState <- get
       let
         toInput (name, v) = (Key ("in." <> name), v)
         sandboxState = initialState
-          { catboxResults = Map.fromList (toInput <$> Map.toList params) }
+          { catboxWorkingDirectory = FilePath.takeDirectory newPath
+          , catboxResults = Map.fromList (toInput <$> Map.toList params)
+          }
 
-      case processGraph newPath graph sandboxState of
+      case processGraph graph sandboxState of
         Left err ->
           throwError err
         Right finalState -> do
