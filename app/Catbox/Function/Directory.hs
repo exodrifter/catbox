@@ -18,7 +18,7 @@ listFilesFunction =
   Function { functionName = "list_files", .. }
   where
     functionExec params key = do
-      path <- getPath "path" params
+      path <- pathParam "path" params
       files <- getFilePaths path
       insertKey
         (key <> ".result")

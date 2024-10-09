@@ -20,8 +20,8 @@ changeExtensionFunction =
   Function { functionName = "change_extension", .. }
   where
     functionExec params key = do
-      extension <- getText "extension" params
-      path <- getPath "path" params
+      extension <- textParam "extension" params
+      path <- pathParam "path" params
       insertKey
         (key <> ".result")
         (CPath (FilePath.replaceExtension path (T.unpack extension)))

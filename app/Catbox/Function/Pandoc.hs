@@ -36,7 +36,7 @@ parseMarkdownFunction =
   Function { functionName = "parse_markdown", .. }
   where
     functionExec params key = do
-      text <- getText "text" params
+      text <- textParam "text" params
       pandoc <- runPandocPure (Pandoc.readMarkdown Pandoc.def text)
       insertKey (key <> ".result") (CPandoc pandoc)
 
@@ -45,7 +45,7 @@ renderHtml5Function =
   Function { functionName = "render_html5", .. }
   where
     functionExec params key = do
-      pandoc <- getPandoc "pandoc" params
+      pandoc <- pandocParam "pandoc" params
       html <- runPandocPure (Pandoc.writeHtml5 Pandoc.def pandoc)
       let text = TL.toStrict (Blaze.renderHtml html)
       insertKey (key <> ".result") (CText text)

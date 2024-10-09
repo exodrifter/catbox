@@ -21,8 +21,8 @@ concatFunction =
   Function { functionName = "concat", .. }
   where
     functionExec params key = do
-      a <- getText "a" params
-      b <- getText "b" params
+      a <- textParam "a" params
+      b <- textParam "b" params
       insertKey
         (key <> ".result")
         (CText (a <> b))
@@ -32,7 +32,7 @@ lowercaseFunction =
   Function { functionName = "lowercase", .. }
   where
     functionExec params key = do
-      text <- getText "text" params
+      text <- textParam "text" params
       insertKey
         (key <> ".result")
         (CText (T.toLower text))
@@ -42,7 +42,7 @@ uppercaseFunction =
   Function { functionName = "uppercase", .. }
   where
     functionExec params key = do
-      text <- getText "text" params
+      text <- textParam "text" params
       insertKey
         (key <> ".result")
         (CText (T.toUpper text))

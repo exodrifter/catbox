@@ -19,7 +19,7 @@ fileContentsFunction =
   Function { functionName = "file_contents", .. }
   where
     functionExec params key = do
-      path <- getPath "path" params
+      path <- pathParam "path" params
       contents <- getFileContents path
       insertKey
         (key <> ".result")
@@ -30,8 +30,8 @@ makeFileFunction =
   Function { functionName = "make_file", .. }
   where
     functionExec params key = do
-      path <- getPath "path" params
-      text <- getText "text" params
+      path <- pathParam "path" params
+      text <- textParam "text" params
       insertKey
         (key <> ".result")
         (CFile (File path text))

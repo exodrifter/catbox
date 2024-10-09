@@ -1,9 +1,9 @@
 module Catbox.Internal.Function
 ( Function(..)
-, getFile
-, getPath
-, getPandoc
-, getText
+, fileParam
+, pathParam
+, pandocParam
+, textParam
 ) where
 
 import Catbox.Internal.Monad
@@ -22,30 +22,30 @@ data Function =
 -- function helpers
 -------------------------------------------------------------------------------
 
-getFile :: Text -> Map Text Value -> Catbox Text File
-getFile name params =
+fileParam :: Text -> Map Text Value -> Catbox Text File
+fileParam name params =
   case Map.lookup name params of
     Just (CFile v) -> pure v
-    Just _ -> throwError ("Cannot convert parameter " <> name <> " to file")
+    Just _ -> throwError ("Parameter \"" <> name <> "\" is not a file")
     _ -> throwError ("Cannot find parameter " <> name)
 
-getPath :: Text -> Map Text Value -> Catbox Text FilePath
-getPath name params =
+pathParam :: Text -> Map Text Value -> Catbox Text FilePath
+pathParam name params =
   case Map.lookup name params of
     Just (CPath v) -> pure v
-    Just _ -> throwError ("Cannot convert parameter " <> name <> " to file path")
+    Just _ -> throwError ("Parameter \"" <> name <> "\" is not a path")
     _ -> throwError ("Cannot find parameter " <> name)
 
-getPandoc :: Text -> Map Text Value -> Catbox Text Pandoc
-getPandoc name params =
+pandocParam :: Text -> Map Text Value -> Catbox Text Pandoc
+pandocParam name params =
   case Map.lookup name params of
     Just (CPandoc v) -> pure v
-    Just _ -> throwError ("Cannot convert parameter " <> name <> " to pandoc")
+    Just _ -> throwError ("Parameter \"" <> name <> "\" is not a pandoc")
     _ -> throwError ("Cannot find parameter " <> name)
 
-getText :: Text -> Map Text Value -> Catbox Text Text
-getText name params =
+textParam :: Text -> Map Text Value -> Catbox Text Text
+textParam name params =
   case Map.lookup name params of
     Just (CText v) -> pure v
-    Just _ -> throwError ("Cannot convert parameter " <> name <> " to text")
+    Just _ -> throwError ("Parameter \"" <> name <> "\" is not a text")
     _ -> throwError ("Cannot find parameter " <> name)
