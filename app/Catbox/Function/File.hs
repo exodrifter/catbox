@@ -2,7 +2,6 @@ module Catbox.Function.File
 ( fileFunctions
 ) where
 
-import Catbox.Internal.Function
 import Catbox.Internal.Monad
 import Catbox.Internal.Types
 import qualified Data.Map as Map

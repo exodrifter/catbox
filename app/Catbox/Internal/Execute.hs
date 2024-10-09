@@ -2,16 +2,15 @@ module Catbox.Internal.Execute
 ( processGraph
 ) where
 
-import Catbox.Internal.Function
 import Catbox.Internal.Monad
 import Catbox.Internal.Types
 import qualified Data.Map as Map
 import qualified Data.Text as T
 import qualified System.FilePath as FilePath
 
-processGraph :: FilePath -> Map Text Function -> Graph -> CatboxState -> Either Text (Map Text Value)
-processGraph path functions graph initialState = do
-  let catbox = processNodes path functions (graphNodes graph)
+processGraph :: FilePath -> Graph -> CatboxState -> Either Text (Map Text Value)
+processGraph path graph initialState = do
+  let catbox = processNodes path (graphNodes graph)
   case runCatbox catbox initialState of
     (Left errs, _) -> Left errs
     (Right (), finalState) ->
@@ -36,12 +35,12 @@ extractResults s outputs = do
 
 -- Tries to process the output of all nodes in the graph. Returns an error if
 -- it fails to do so.
-processNodes :: FilePath -> Map Text Function -> [Node] -> Catbox Text ()
-processNodes path functions nodes = do
+processNodes :: FilePath -> [Node] -> Catbox Text ()
+processNodes path nodes = do
   let
     tryExec :: [(Node, Text)] -> Node -> Catbox Text [(Node, Text)]
     tryExec failed node = do
-      result <- tryError (processNode path functions node)
+      result <- tryError (processNode path node)
       case result of
         Left err -> pure ((node, err):failed)
         Right () -> pure failed
@@ -59,25 +58,23 @@ processNodes path functions nodes = do
 
       -- Some succeeded, try again
       | otherwise ->
-        processNodes path functions (fst <$> failed)
+        processNodes path (fst <$> failed)
 
-processNode :: FilePath -> Map Text Function -> Node -> Catbox Text ()
-processNode path functions node = do
+processNode :: FilePath -> Node -> Catbox Text ()
+processNode path node = do
   args <- resolveParameters (nodeParameters node)
   invoke
     path
-    functions
     (nodeType node)
     args
     (Key (nodeId node))
 
-invoke :: FilePath -> Map Text Function -> NodeType -> Map Text Value -> Key -> Catbox Text ()
-invoke path functions nodeType params key =
+invoke :: FilePath -> NodeType -> Map Text Value -> Key -> Catbox Text ()
+invoke path nodeType params key =
   case nodeType of
-    NodeFunction name ->
-      case Map.lookup name functions of
-        Nothing -> throwError ("Cannot find function \"" <> name <> "\"")
-        Just fn -> functionExec fn params key
+    NodeFunction name -> do
+      fn <- getFunction name
+      functionExec fn params key
 
     NodeGraph graphPath -> do
       -- The path is relative to the graph we are currently invoking, so we have
@@ -92,7 +89,7 @@ invoke path functions nodeType params key =
         sandboxState = initialState
           { catboxResults = Map.fromList (toInput <$> Map.toList params) }
 
-      case processGraph newPath functions graph sandboxState of
+      case processGraph newPath graph sandboxState of
         Left err ->
           throwError err
         Right finalState -> do

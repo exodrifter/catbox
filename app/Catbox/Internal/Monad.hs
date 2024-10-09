@@ -1,27 +1,38 @@
 module Catbox.Internal.Monad
 ( Catbox
-, CatboxState(..)
-, evalCatbox
-, runCatbox
-, mapError
 , throwError
 , tryError
 
--- File Functions
+-- State
+, CatboxState(..)
+, evalCatbox
+, runCatbox
+
+-- Files
 , getFilePaths
 , getFileContents
 
--- Graph Functions
+-- Graphs
 , getGraph
 
--- Result Functions
+-- Results
 , insertKey
 , resolveParameters
 , resolveParameter
+
+-- Functions
+, Function(..)
+, getFunction
+, getFunctions
+, fileParam
+, pathParam
+, pandocParam
+, textParam
 ) where
 
 import Catbox.Internal.Types
-import Control.Monad.Except (MonadError, mapError, throwError, tryError)
+import Control.Monad.Except (MonadError, throwError, tryError)
+import Text.Pandoc (Pandoc)
 import qualified Data.Map as Map
 import qualified Data.Text as T
 
@@ -36,12 +47,18 @@ newtype Catbox e a = Catbox (ExceptT e (StateT CatboxState Identity) a)
     , MonadError e
     )
 
+-------------------------------------------------------------------------------
+-- State
+-------------------------------------------------------------------------------
+
 data CatboxState =
   CatboxState
     -- A map of file paths relative to the input folder to file contents.
     { catboxFiles :: Map FilePath Text
     -- A map of file paths relative to the working directory to file contents.
     , catboxGraphs :: Map FilePath Graph
+    -- The functions that can be called.
+    , catboxFunctions :: Map Text Function
     -- Stores the result for each key in the node graph.
     , catboxResults :: Map Key Value
     }
@@ -55,7 +72,7 @@ runCatbox (Catbox catbox) results =
   runIdentity . flip runStateT results $ runExceptT catbox
 
 -------------------------------------------------------------------------------
--- File Functions
+-- Files
 -------------------------------------------------------------------------------
 
 getFilePaths :: FilePath -> Catbox e [FilePath]
@@ -71,7 +88,7 @@ getFileContents path = do
     Just file -> pure file
 
 -------------------------------------------------------------------------------
--- Graph Functions
+-- Graphs
 -------------------------------------------------------------------------------
 
 getGraph :: FilePath -> Catbox Text Graph
@@ -82,7 +99,55 @@ getGraph path = do
     Just file -> pure file
 
 -------------------------------------------------------------------------------
--- Result Functions
+-- Functions
+-------------------------------------------------------------------------------
+
+data Function =
+  Function
+    { functionName :: Text
+    , functionExec :: Map Text Value -> Key -> Catbox Text ()
+    }
+
+getFunction :: Text -> Catbox Text Function
+getFunction name = do
+  functions <- gets catboxFunctions
+  case Map.lookup name functions of
+    Nothing -> throwError ("Cannot find function \"" <> name <> "\"")
+    Just fn -> pure fn
+
+getFunctions :: Catbox e (Map Text Function)
+getFunctions = gets catboxFunctions
+
+fileParam :: Text -> Map Text Value -> Catbox Text File
+fileParam name params =
+  case Map.lookup name params of
+    Just (CFile v) -> pure v
+    Just _ -> throwError ("Parameter \"" <> name <> "\" is not a file")
+    _ -> throwError ("Cannot find parameter " <> name)
+
+pathParam :: Text -> Map Text Value -> Catbox Text FilePath
+pathParam name params =
+  case Map.lookup name params of
+    Just (CPath v) -> pure v
+    Just _ -> throwError ("Parameter \"" <> name <> "\" is not a path")
+    _ -> throwError ("Cannot find parameter " <> name)
+
+pandocParam :: Text -> Map Text Value -> Catbox Text Pandoc
+pandocParam name params =
+  case Map.lookup name params of
+    Just (CPandoc v) -> pure v
+    Just _ -> throwError ("Parameter \"" <> name <> "\" is not a pandoc")
+    _ -> throwError ("Cannot find parameter " <> name)
+
+textParam :: Text -> Map Text Value -> Catbox Text Text
+textParam name params =
+  case Map.lookup name params of
+    Just (CText v) -> pure v
+    Just _ -> throwError ("Parameter \"" <> name <> "\" is not a text")
+    _ -> throwError ("Cannot find parameter " <> name)
+
+-------------------------------------------------------------------------------
+-- Results
 -------------------------------------------------------------------------------
 
 insertKey :: Key -> Value -> Catbox e ()

@@ -25,7 +25,6 @@ executable catbox
       Catbox.Function.Path
       Catbox.Internal
       Catbox.Internal.Execute
-      Catbox.Internal.Function
       Catbox.Internal.Monad
       Catbox.Internal.Types
 

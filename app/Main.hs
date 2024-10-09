@@ -24,7 +24,7 @@ main = do
   Options {..} <- execParser opts
 
   -- Read the graph
-  result <- createCatboxState inputDirectory graphPath
+  result <- createCatboxState inputDirectory graphPath standardFunctions
   case result of
     Left errs ->
       traverse_ TIO.putStrLn errs
@@ -35,14 +35,14 @@ main = do
 
         Just graph -> do
           -- Execute graph and print result
-          case processGraph graphPath standardFunctions graph initialState of
+          case processGraph graphPath graph initialState of
             Left errs -> do
               TIO.putStrLn ("FAILED! " <> errs)
             Right finalState -> do
               processResults outputDirectory finalState
 
-createCatboxState :: FilePath -> FilePath -> IO (Either [Text] CatboxState)
-createCatboxState inputDirectory graphPath = do
+createCatboxState :: FilePath -> FilePath -> Map Text Function -> IO (Either [Text] CatboxState)
+createCatboxState inputDirectory graphPath catboxFunctions = do
   let catboxResults = Map.empty
 
   paths <- listFilesRecursive inputDirectory ""
