@@ -27,6 +27,7 @@ data Graph =
     , graphNodes :: [Node]
     , graphOutputs :: [Output]
     }
+  deriving (Eq, Show)
 
 instance Aeson.FromJSON Graph where
   parseJSON = Aeson.withObject "Graph" $ \v -> do
@@ -52,6 +53,7 @@ data Input =
     { inputName :: Text
     , inputType :: Text
     }
+  deriving (Eq, Show)
 
 instance Aeson.FromJSON Input where
   parseJSON = Aeson.withObject "Input" $ \v -> do
@@ -72,6 +74,7 @@ data Node =
     , nodeType :: NodeType
     , nodeParameters :: [Parameter]
     }
+  deriving (Eq, Show)
 
 instance Aeson.FromJSON Node where
   parseJSON = Aeson.withObject "Node" $ \v -> do
@@ -91,6 +94,7 @@ instance Aeson.ToJSON Node where
 data NodeType =
     NodeFunction Text
   | NodeGraph FilePath
+  deriving (Eq, Show)
 
 instance Aeson.FromJSON NodeType where
   parseJSON = Aeson.withObject "NodeType" $ \v -> do
@@ -119,6 +123,7 @@ data Parameter =
     { parameterName :: Text
     , parameterSource :: ParameterSource
     }
+  deriving (Eq, Show)
 
 instance Aeson.FromJSON Parameter where
   parseJSON = Aeson.withObject "Parameter" $ \v -> do
@@ -136,6 +141,7 @@ instance Aeson.ToJSON Parameter where
 data ParameterSource =
     Connection Key
   | Constant Value
+  deriving (Eq, Show)
 
 instance Aeson.FromJSON ParameterSource where
   parseJSON = Aeson.withObject "ParameterSource" $ \v -> do
@@ -164,6 +170,7 @@ data Output =
     { outputName :: Text
     , outputParameter :: Parameter
     }
+  deriving (Eq, Show)
 
 instance Aeson.FromJSON Output where
   parseJSON = Aeson.withObject "Output" $ \v -> do
@@ -194,6 +201,7 @@ newtype Key = Key { keyToText :: Text }
 -- The different kinds of values you can pass in catbox.
 data Value =
     CFile File
+  | CGraph Graph
   | CList [Value]
   | CPandoc Pandoc
   | CPath FilePath
@@ -217,6 +225,11 @@ instance Aeson.ToJSON Value where
       CFile a ->
         Aeson.object
           [ "type" .= ("file" :: Text)
+          , "value" .= a
+          ]
+      CGraph a ->
+        Aeson.object
+          [ "type" .= ("graph" :: Text)
           , "value" .= a
           ]
       CList a ->

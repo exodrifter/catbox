@@ -121,6 +121,7 @@ processResult outputDirectory (outputName, v) = do
   -- Print the results to standard out
   case v of
     CFile _ -> pure ()
+    CGraph a -> printDebug a
     CList a -> printDebug a
     CPandoc a -> printDebug a
     CPath a -> printDebug a
@@ -135,6 +136,7 @@ processResult outputDirectory (outputName, v) = do
         True
         (FilePath.takeDirectory outputPath)
       TIO.writeFile outputPath text
+    CGraph _ -> pure ()
     CList _ -> pure ()
     CPandoc _ -> pure ()
     CPath _ -> pure ()
