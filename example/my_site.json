@@ -2,8 +2,44 @@
     "inputs": [],
     "nodes": [
         {
+            "id": "import",
+            "parameters": [
+                {
+                    "name": "path",
+                    "source": {
+                        "type": "constant",
+                        "value": {
+                            "type": "path",
+                            "value": "ssg.json"
+                        }
+                    }
+                }
+            ],
+            "type": {
+                "type": "function",
+                "value": "import_graph"
+            }
+        },
+        {
             "id": "ssg",
             "parameters": [
+                {
+                    "name": "_path",
+                    "source": {
+                        "type": "constant",
+                        "value": {
+                            "type": "path",
+                            "value": "ssg.json"
+                        }
+                    }
+                },
+                {
+                    "name": "_graph",
+                    "source": {
+                        "type": "connection",
+                        "value": "import.result"
+                    }
+                },
                 {
                     "name": "path",
                     "source": {
@@ -16,8 +52,8 @@
                 }
             ],
             "type": {
-                "type": "graph",
-                "value": "ssg.json"
+                "type": "function",
+                "value": "exec_graph"
             }
         }
     ],

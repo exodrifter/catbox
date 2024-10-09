@@ -28,6 +28,7 @@ module Catbox.Internal.Monad
 , getFunction
 , getFunctions
 , fileParam
+, graphParam
 , pathParam
 , pandocParam
 , textParam
@@ -135,6 +136,13 @@ fileParam name params =
   case Map.lookup name params of
     Just (CFile v) -> pure v
     Just _ -> throwError ("Parameter \"" <> name <> "\" is not a file")
+    _ -> throwError ("Cannot find parameter " <> name)
+
+graphParam :: Text -> Map Text Value -> Catbox Text Graph
+graphParam name params =
+  case Map.lookup name params of
+    Just (CGraph v) -> pure v
+    Just _ -> throwError ("Parameter \"" <> name <> "\" is not a graph")
     _ -> throwError ("Cannot find parameter " <> name)
 
 pathParam :: Text -> Map Text Value -> Catbox Text FilePath

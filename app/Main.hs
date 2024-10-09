@@ -98,7 +98,17 @@ loadGraphs path = do
           case nodeType node of
             NodeGraph p ->
               Just (FilePath.combine (FilePath.takeDirectory path) p)
-            _ -> Nothing
+            NodeFunction "import_graph" ->
+              case filter (\p -> parameterName p == "path") (nodeParameters node) of
+                [param] ->
+                  case parameterSource param of
+                    Constant (CPath p) ->
+                      Just (FilePath.combine (FilePath.takeDirectory path) p)
+                    _ ->
+                      Nothing
+                _ -> Nothing
+            NodeFunction _ ->
+              Nothing
         dependencies = mapMaybe extractGraph (graphNodes graph)
 
       results <- traverse loadGraphs dependencies

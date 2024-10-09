@@ -5,6 +5,7 @@ module Catbox.Function
 
 import Catbox.Function.Base as X
 import Catbox.Function.File as X
+import Catbox.Function.Graph as X
 import Catbox.Function.Pandoc as X
 import Catbox.Function.Path as X
 
@@ -16,6 +17,7 @@ standardFunctions =
   Map.unions
     [ baseFunctions
     , fileFunctions
+    , graphFunctions
     , pandocFunctions
     , pathFunctions
     ]
