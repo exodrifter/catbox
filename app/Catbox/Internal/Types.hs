@@ -255,12 +255,13 @@ instance Aeson.FromJSON Value where
     typ <- v .: "type" :: Aeson.Parser Text
     case typ of
       "file" -> CFile <$> v .: "value"
+      "graph" -> CGraph <$> v .: "value"
       "list" -> CList <$> v .: "value"
       "object" -> CObject <$> v .: "value"
       "pandoc" -> CPandoc <$> v .: "value"
       "path" -> CPath <$> v .: "value"
       "text" -> CText <$> v .: "value"
-      _ -> fail "unknown value type"
+      _ -> fail (T.unpack ("unknown value type \"" <> typ <> "\""))
 
 instance Aeson.ToJSON Value where
   toJSON v =

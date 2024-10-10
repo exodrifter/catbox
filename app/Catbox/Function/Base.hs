@@ -11,6 +11,7 @@ baseFunctions :: Map Text Function
 baseFunctions =
   Map.fromList $ (\g -> (functionName g, g)) <$>
     [ concatFunction
+    , deconstructFunction
     , lowercaseFunction
     , uppercaseFunction
     ]
@@ -25,6 +26,15 @@ concatFunction =
       insertKey
         (key <> "result")
         (CText (a <> b))
+
+deconstructFunction :: Function
+deconstructFunction =
+  Function {functionName = "deconstruct", .. }
+  where
+    functionExec params key = do
+      object <- objectParam "object" params
+      let writeKeys (k, v) = insertKey (key <> keyFromText k) v
+      traverse_ writeKeys (Map.toList (objectFields object))
 
 lowercaseFunction :: Function
 lowercaseFunction =

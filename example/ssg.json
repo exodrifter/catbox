@@ -145,6 +145,26 @@
                     "value": "output.result"
                 }
             }
+        },
+        {
+            "name": "path",
+            "parameter": {
+                "name": "path",
+                "source": {
+                    "type": "connection",
+                    "value": "new_path.result"
+                }
+            }
+        },
+        {
+            "name": "text",
+            "parameter": {
+                "name": "text",
+                "source": {
+                    "type": "connection",
+                    "value": "render.result"
+                }
+            }
         }
     ]
 }

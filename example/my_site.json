@@ -5,7 +5,7 @@
     "inputs": [],
     "nodes": [
         {
-            "id": "files",
+            "id": "list_files",
             "function": "list_files",
             "parameters": [
                 {
@@ -45,7 +45,74 @@
                     "name": "_list",
                     "source": {
                         "type": "connection",
-                        "value": "files.result"
+                        "value": "list_files.result"
+                    }
+                }
+            ]
+        },
+        {
+            "id": "get_files",
+            "function": "map",
+            "parameters": [
+                {
+                    "name": "_graph",
+                    "source": {
+                        "type": "constant",
+                        "value": {
+                            "type": "graph",
+                            "value": {
+                                "inputs": [
+                                    {
+                                        "name": "object",
+                                        "type": "object"
+                                    }
+                                ],
+                                "nodes": [
+                                    {
+                                        "id": "deconstruct",
+                                        "function": "deconstruct",
+                                        "parameters": [
+                                            {
+                                                "name": "object",
+                                                "source": {
+                                                    "type": "connection",
+                                                    "value": "in.object"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "outputs": [
+                                    {
+                                        "name": "file",
+                                        "parameter": {
+                                            "name": "file",
+                                            "source": {
+                                                "type": "connection",
+                                                "value": "deconstruct.file"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "_input",
+                    "source": {
+                        "type": "constant",
+                        "value": {
+                            "type": "text",
+                            "value": "object"
+                        }
+                    }
+                },
+                {
+                    "name": "_list",
+                    "source": {
+                        "type": "connection",
+                        "value": "site.result"
                     }
                 }
             ]
@@ -58,7 +125,7 @@
                 "name": "result",
                 "source": {
                     "type": "connection",
-                    "value": "site.result"
+                    "value": "get_files.result"
                 }
             }
         }

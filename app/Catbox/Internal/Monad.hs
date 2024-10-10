@@ -24,6 +24,7 @@ module Catbox.Internal.Monad
 , fileParam
 , graphParam
 , listParam
+, objectParam
 , pathParam
 , pandocParam
 , textParam
@@ -125,6 +126,13 @@ listParam name params =
   case Map.lookup name params of
     Just (CList v) -> pure v
     Just _ -> throwError ("Parameter \"" <> name <> "\" is not a list")
+    _ -> throwError ("Cannot find parameter " <> name)
+
+objectParam :: Text -> Map Text Value -> Catbox Text Object
+objectParam name params =
+  case Map.lookup name params of
+    Just (CObject v) -> pure v
+    Just _ -> throwError ("Parameter \"" <> name <> "\" is not a object")
     _ -> throwError ("Cannot find parameter " <> name)
 
 pathParam :: Text -> Map Text Value -> Catbox Text FilePath
