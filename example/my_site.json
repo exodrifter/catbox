@@ -5,7 +5,26 @@
     "inputs": [],
     "nodes": [
         {
-            "id": "ssg",
+            "id": "files",
+            "parameters": [
+                {
+                    "name": "path",
+                    "source": {
+                        "type": "constant",
+                        "value": {
+                            "type": "path",
+                            "value": ""
+                        }
+                    }
+                }
+            ],
+            "type": {
+                "type": "function",
+                "value": "list_files"
+            }
+        },
+        {
+            "id": "site",
             "parameters": [
                 {
                     "name": "_graph",
@@ -15,19 +34,26 @@
                     }
                 },
                 {
-                    "name": "path",
+                    "name": "_input",
                     "source": {
                         "type": "constant",
                         "value": {
-                            "type": "path",
-                            "value": "input.md"
+                            "type": "text",
+                            "value": "path"
                         }
+                    }
+                },
+                {
+                    "name": "_list",
+                    "source": {
+                        "type": "connection",
+                        "value": "files.result"
                     }
                 }
             ],
             "type": {
                 "type": "function",
-                "value": "exec_graph"
+                "value": "map"
             }
         }
     ],
@@ -38,7 +64,7 @@
                 "name": "file",
                 "source": {
                     "type": "connection",
-                    "value": "ssg.file"
+                    "value": "site.file"
                 }
             }
         },
@@ -48,7 +74,7 @@
                 "name": "path",
                 "source": {
                     "type": "connection",
-                    "value": "ssg.path"
+                    "value": "site.path"
                 }
             }
         },
@@ -58,7 +84,7 @@
                 "name": "text",
                 "source": {
                     "type": "connection",
-                    "value": "ssg.text"
+                    "value": "site.text"
                 }
             }
         }

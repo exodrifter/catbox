@@ -128,35 +128,39 @@ processResults outputDirectory outputs = do
   traverse_ (processResult outputDirectory) (Map.toList outputs)
 
 processResult :: FilePath -> (Text, Value) -> IO ()
-processResult outputDirectory (outputName, v) = do
+processResult outputDirectory (outputName, val) = do
   let
-    printDebug :: (Show a) => a -> IO ()
-    printDebug a =
-      TIO.putStrLn (outputName <> " = " <> T.pack (show a))
-
-  -- Print the results to standard out
-  case v of
-    CFile _ -> pure ()
-    CGraph a -> printDebug a
-    CList a -> printDebug a
-    CPandoc a -> printDebug a
-    CPath a -> printDebug a
-    CText a -> printDebug a
-
-  -- Write results to filesystem
-  case v of
-    CFile (File path text) -> do
+    printDebug :: Value -> IO ()
+    printDebug v =
       let
-        outputPath = FilePath.combine outputDirectory path
-      Directory.createDirectoryIfMissing
-        True
-        (FilePath.takeDirectory outputPath)
-      TIO.writeFile outputPath text
-    CGraph _ -> pure ()
-    CList _ -> pure ()
-    CPandoc _ -> pure ()
-    CPath _ -> pure ()
-    CText _ -> pure ()
+        printValue a = TIO.putStrLn (outputName <> " = " <> T.pack (show a))
+      in
+        case v of
+          CFile _ -> pure ()
+          CGraph a -> printValue a
+          CList a -> traverse_ printDebug a
+          CPandoc a -> printValue a
+          CPath a -> printValue a
+          CText a -> printValue a
+
+    writeResults :: Value -> IO ()
+    writeResults v =
+      case v of
+        CFile (File path text) -> do
+          let
+            outputPath = FilePath.combine outputDirectory path
+          Directory.createDirectoryIfMissing
+            True
+            (FilePath.takeDirectory outputPath)
+          TIO.writeFile outputPath text
+        CGraph _ -> pure ()
+        CList a -> traverse_ writeResults a
+        CPandoc _ -> pure ()
+        CPath _ -> pure ()
+        CText _ -> pure ()
+
+  printDebug val
+  writeResults val
 
 -------------------------------------------------------------------------------
 -- Command line parsing

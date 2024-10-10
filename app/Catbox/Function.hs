@@ -4,6 +4,7 @@ module Catbox.Function
 ) where
 
 import Catbox.Function.Base as X
+import Catbox.Function.Directory as X
 import Catbox.Function.File as X
 import Catbox.Function.Graph as X
 import Catbox.Function.Pandoc as X
@@ -16,6 +17,7 @@ standardFunctions :: Map Text Function
 standardFunctions =
   Map.unions
     [ baseFunctions
+    , directoryFunctions
     , fileFunctions
     , graphFunctions
     , pandocFunctions

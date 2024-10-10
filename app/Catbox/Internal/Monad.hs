@@ -27,6 +27,7 @@ module Catbox.Internal.Monad
 , getFunctions
 , fileParam
 , graphParam
+, listParam
 , pathParam
 , pandocParam
 , textParam
@@ -137,6 +138,13 @@ graphParam name params =
     Just _ -> throwError ("Parameter \"" <> name <> "\" is not a graph")
     _ -> throwError ("Cannot find parameter " <> name)
 
+listParam :: Text -> Map Text Value -> Catbox Text [Value]
+listParam name params =
+  case Map.lookup name params of
+    Just (CList v) -> pure v
+    Just _ -> throwError ("Parameter \"" <> name <> "\" is not a list")
+    _ -> throwError ("Cannot find parameter " <> name)
+
 pathParam :: Text -> Map Text Value -> Catbox Text FilePath
 pathParam name params =
   case Map.lookup name params of
@@ -181,6 +189,6 @@ resolveParameter parameter = do
       results <- gets catboxResults
       case Map.lookup key results of
         Nothing ->
-          throwError ("Cannot find " <> keyToText key)
+          throwError ("Cannot find key \"" <> keyToText key <> "\"")
         Just value ->
           pure (parameterName parameter, value)
