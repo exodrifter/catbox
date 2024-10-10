@@ -130,18 +130,22 @@ processResults outputDirectory outputs = do
 processResult :: FilePath -> (Text, Value) -> IO ()
 processResult outputDirectory (outputName, val) = do
   let
+    printValue :: (Show a) => Text -> a -> IO ()
+    printValue f v = TIO.putStrLn (f <> " = " <> T.pack (show v))
+
     printDebug :: Value -> IO ()
     printDebug v =
-      let
-        printValue a = TIO.putStrLn (outputName <> " = " <> T.pack (show a))
-      in
-        case v of
-          CFile _ -> pure ()
-          CGraph a -> printValue a
-          CList a -> traverse_ printDebug a
-          CPandoc a -> printValue a
-          CPath a -> printValue a
-          CText a -> printValue a
+      case v of
+        CFile _ -> pure ()
+        CGraph a -> printValue outputName a
+        CList a -> traverse_ printDebug a
+        CObject a ->
+          traverse_
+            (\(k, v') -> printValue (outputName <> "." <> k) v')
+            (Map.toList (objectFields a))
+        CPandoc a -> printValue outputName a
+        CPath a -> printValue outputName a
+        CText a -> printValue outputName a
 
     writeResults :: Value -> IO ()
     writeResults v =
@@ -154,6 +158,7 @@ processResult outputDirectory (outputName, val) = do
             (FilePath.takeDirectory outputPath)
           TIO.writeFile outputPath text
         CGraph _ -> pure ()
+        CObject _ -> pure ()
         CList a -> traverse_ writeResults a
         CPandoc _ -> pure ()
         CPath _ -> pure ()

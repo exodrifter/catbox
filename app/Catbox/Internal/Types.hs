@@ -16,6 +16,7 @@ module Catbox.Internal.Types
 , Key(..)
 , Value(..)
 , File(..)
+, Object(..)
 ) where
 
 import Data.Aeson ((.:), (.:?), (.=), (.!=))
@@ -231,6 +232,7 @@ data Value =
     CFile File
   | CGraph Graph
   | CList [Value]
+  | CObject Object
   | CPandoc Pandoc
   | CPath FilePath
   | CText Text
@@ -242,6 +244,7 @@ instance Aeson.FromJSON Value where
     case typ of
       "file" -> CFile <$> v .: "value"
       "list" -> CList <$> v .: "value"
+      "object" -> CObject <$> v .: "value"
       "pandoc" -> CPandoc <$> v .: "value"
       "path" -> CPath <$> v .: "value"
       "text" -> CText <$> v .: "value"
@@ -263,6 +266,11 @@ instance Aeson.ToJSON Value where
       CList a ->
         Aeson.object
           [ "type" .= ("list" :: Text)
+          , "value" .= a
+          ]
+      CObject a ->
+        Aeson.object
+          [ "type" .= ("object" :: Text)
           , "value" .= a
           ]
       CPandoc a ->
@@ -300,3 +308,8 @@ instance Aeson.ToJSON File where
       [ "path" .= filePath v
       , "text" .= fileText v
       ]
+
+newtype Object = Object { objectFields :: Map Text Value }
+  deriving newtype (Eq, Show)
+  deriving Aeson.FromJSON via Map Text Value
+  deriving Aeson.ToJSON via Map Text Value

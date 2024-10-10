@@ -33,7 +33,10 @@ execGraphFunction =
         Left err ->
           throwError err
         Right finalState -> do
-          loadResults key finalState
+          let
+            loadResult (name, v) =
+              insertKey (key <> "." <> Key name) v
+          traverse_ loadResult (Map.toList finalState)
 
 mapFunction :: Function
 mapFunction =
@@ -56,29 +59,18 @@ mapFunction =
         )
         list
 
-      loadResults key (collectResults results)
+      insertKey (key <> ".result") (CList (catMaybes results))
 
-    getResults :: Graph -> CatboxState -> Catbox Text (Map Text Value)
+    getResults :: Graph -> CatboxState -> Catbox Text (Maybe Value)
     getResults graph s =
       case processGraph graph s of
         Left err ->
           throwError err
         Right finalState -> do
-          pure finalState
-
-    collectResults :: [Map Text Value] -> Map Text Value
-    collectResults results =
-      let
-        combine :: Map Text [Value] -> [(Text, Value)] -> Map Text [Value]
-        combine =
-          foldl'
-            ( \a (key, value) ->
-                if Map.member key a
-                then Map.adjust (value:) key a
-                else Map.insert key [value] a
-            )
-      in
-        CList <$> foldl' combine Map.empty (Map.toList <$> results)
+          case Map.toList finalState of
+            [] -> pure Nothing
+            [(_, v)] -> pure (Just v)
+            _ -> pure (Just (CObject (Object finalState)))
 
 --------------------------------------------------------------------------------
 -- Helpers
@@ -94,10 +86,3 @@ paramsToGraphInputs params =
       else Just (Key ("in." <> name), v)
   in
     Map.fromList (mapMaybe toInput (Map.toList params))
-
-loadResults :: Key -> Map Text Value -> Catbox e ()
-loadResults key results = do
-  let
-    loadResult (name, v) =
-      insertKey (key <> "." <> Key name) v
-  traverse_ loadResult (Map.toList results)

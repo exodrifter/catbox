@@ -53,32 +53,12 @@
     ],
     "outputs": [
         {
-            "name": "file",
+            "name": "result",
             "parameter": {
-                "name": "file",
+                "name": "result",
                 "source": {
                     "type": "connection",
-                    "value": "site.file"
-                }
-            }
-        },
-        {
-            "name": "path",
-            "parameter": {
-                "name": "path",
-                "source": {
-                    "type": "connection",
-                    "value": "site.path"
-                }
-            }
-        },
-        {
-            "name": "text",
-            "parameter": {
-                "name": "text",
-                "source": {
-                    "type": "connection",
-                    "value": "site.text"
+                    "value": "site.result"
                 }
             }
         }
