@@ -8,6 +8,7 @@
     "nodes": [
         {
             "id": "read",
+            "function": "file_contents",
             "parameters": [
                 {
                     "name": "path",
@@ -16,14 +17,11 @@
                         "value": "in.path"
                     }
                 }
-            ],
-            "type": {
-                "type": "function",
-                "value": "file_contents"
-            }
+            ]
         },
         {
             "id": "upper",
+            "function": "uppercase",
             "parameters": [
                 {
                     "name": "text",
@@ -32,14 +30,11 @@
                         "value": "read.result"
                     }
                 }
-            ],
-            "type": {
-                "type": "function",
-                "value": "uppercase"
-            }
+            ]
         },
         {
             "id": "lower",
+            "function": "lowercase",
             "parameters": [
                 {
                     "name": "text",
@@ -48,14 +43,11 @@
                         "value": "read.result"
                     }
                 }
-            ],
-            "type": {
-                "type": "function",
-                "value": "lowercase"
-            }
+            ]
         },
         {
             "id": "concat",
+            "function": "concat",
             "parameters": [
                 {
                     "name": "a",
@@ -71,14 +63,11 @@
                         "value": "lower.result"
                     }
                 }
-            ],
-            "type": {
-                "type": "function",
-                "value": "concat"
-            }
+            ]
         },
         {
             "id": "parse",
+            "function": "parse_markdown",
             "parameters": [
                 {
                     "name": "text",
@@ -87,14 +76,11 @@
                         "value": "concat.result"
                     }
                 }
-            ],
-            "type": {
-                "type": "function",
-                "value": "parse_markdown"
-            }
+            ]
         },
         {
             "id": "render",
+            "function": "render_html5",
             "parameters": [
                 {
                     "name": "pandoc",
@@ -103,14 +89,11 @@
                         "value": "parse.result"
                     }
                 }
-            ],
-            "type": {
-                "type": "function",
-                "value": "render_html5"
-            }
+            ]
         },
         {
             "id": "new_path",
+            "function": "change_extension",
             "parameters": [
                 {
                     "name": "extension",
@@ -129,14 +112,11 @@
                         "value": "in.path"
                     }
                 }
-            ],
-            "type": {
-                "type": "function",
-                "value": "change_extension"
-            }
+            ]
         },
         {
             "id": "output",
+            "function": "make_file",
             "parameters": [
                 {
                     "name": "path",
@@ -152,11 +132,7 @@
                         "value": "render.result"
                     }
                 }
-            ],
-            "type": {
-                "type": "function",
-                "value": "make_file"
-            }
+            ]
         }
     ],
     "outputs": [

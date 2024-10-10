@@ -76,34 +76,9 @@ processNodes nodes = do
 processNode :: Node -> Catbox Text ()
 processNode node = do
   args <- resolveParameters (nodeParameters node)
-  invoke
-    (nodeType node)
-    args
-    (Key (nodeId node))
+  invoke (nodeFunction node) args (Key (nodeId node))
 
-invoke :: NodeType -> Map Text Value -> Key -> Catbox Text ()
-invoke nodeType params key =
-  case nodeType of
-    NodeFunction name -> do
-      fn <- getFunction name
-      functionExec fn params key
-
-    NodeGraph importKey -> do
-      graph <- getImport importKey
-
-      -- Set the initial state of the graph.
-      initialState <- get
-      let
-        toInput (name, v) = (Key ("in." <> name), v)
-        sandboxState = initialState
-          { catboxResults = Map.fromList (toInput <$> Map.toList params)
-          }
-
-      case processGraph graph sandboxState of
-        Left err ->
-          throwError err
-        Right finalState -> do
-          let
-            loadResults (name, v) =
-              insertKey (key <> "." <> Key name) v
-          traverse_ loadResults (Map.toList finalState)
+invoke :: Text -> Map Text Value -> Key -> Catbox Text ()
+invoke name params key = do
+  fn <- getFunction name
+  functionExec fn params key

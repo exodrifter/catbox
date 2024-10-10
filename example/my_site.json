@@ -6,6 +6,7 @@
     "nodes": [
         {
             "id": "files",
+            "function": "list_files",
             "parameters": [
                 {
                     "name": "path",
@@ -17,14 +18,11 @@
                         }
                     }
                 }
-            ],
-            "type": {
-                "type": "function",
-                "value": "list_files"
-            }
+            ]
         },
         {
             "id": "site",
+            "function": "map",
             "parameters": [
                 {
                     "name": "_graph",
@@ -50,11 +48,7 @@
                         "value": "files.result"
                     }
                 }
-            ],
-            "type": {
-                "type": "function",
-                "value": "map"
-            }
+            ]
         }
     ],
     "outputs": [

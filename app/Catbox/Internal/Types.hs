@@ -6,8 +6,7 @@ module Catbox.Internal.Types
 
 -- Parts of the graph
 , Input(inputName, inputType)
-, Node(nodeId, nodeType, nodeParameters)
-, NodeType(..)
+, Node(nodeId, nodeFunction, nodeParameters)
 , Output(outputName, outputParameter)
 , Parameter(parameterName, parameterSource)
 , ParameterSource(..)
@@ -125,7 +124,7 @@ instance Aeson.ToJSON Input where
 data Node =
   Node
     { nodeId :: Text
-    , nodeType :: NodeType
+    , nodeFunction :: Text
     , nodeParameters :: [Parameter]
     }
   deriving (Eq, Show)
@@ -134,43 +133,16 @@ instance Aeson.FromJSON Node where
   parseJSON = Aeson.withObject "Node" $ \v -> do
     Node
       <$> v .: "id"
-      <*> v .: "type"
+      <*> v .: "function"
       <*> v .: "parameters"
 
 instance Aeson.ToJSON Node where
   toJSON v =
     Aeson.object
       [ "id" .= nodeId v
-      , "type" .= nodeType v
+      , "function" .= nodeFunction v
       , "parameters" .= nodeParameters v
       ]
-
-data NodeType =
-    NodeFunction Text
-  | NodeGraph Key
-  deriving (Eq, Show)
-
-instance Aeson.FromJSON NodeType where
-  parseJSON = Aeson.withObject "NodeType" $ \v -> do
-    typ <- v .: "type" :: Aeson.Parser Text
-    case typ of
-      "function" -> NodeFunction <$> v .: "value"
-      "graph" -> NodeGraph <$> v .: "value"
-      _ -> fail "unknown node type type"
-
-instance Aeson.ToJSON NodeType where
-  toJSON v =
-    case v of
-      NodeFunction a ->
-        Aeson.object
-          [ "type" .= ("function" :: Text)
-          , "value" .= a
-          ]
-      NodeGraph a ->
-        Aeson.object
-          [ "type" .= ("graph" :: Text)
-          , "value" .= a
-          ]
 
 data Parameter =
   Parameter
