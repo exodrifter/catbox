@@ -29,32 +29,26 @@ main = do
     Left errs ->
       traverse_ TIO.putStrLn errs
     Right initialState ->
-      case Map.lookup graphPath (catboxGraphs initialState) of
-        Nothing ->
-          TIO.putStrLn "Failed to load graphs"
-
-        Just graph -> do
-          -- Execute graph and print result
-          case processGraph graph initialState of
-            Left errs -> do
-              TIO.putStrLn ("FAILED! " <> errs)
-            Right finalState -> do
-              processResults outputDirectory finalState
+      -- Execute graph and print result
+      case processGraph (catboxGraph initialState) initialState of
+        Left errs -> do
+          TIO.putStrLn ("FAILED! " <> errs)
+        Right finalState -> do
+          processResults outputDirectory finalState
 
 createCatboxState :: FilePath -> FilePath -> Map Text Function -> IO (Either [Text] CatboxState)
 createCatboxState inputDirectory graphPath catboxFunctions = do
   let
     catboxResults = Map.empty
-    catboxWorkingDirectory = FilePath.takeDirectory graphPath
 
   paths <- listFilesRecursive inputDirectory ""
   catboxFiles <- loadFiles inputDirectory paths
 
-  result <- loadGraphs graphPath
+  result <- loadGraph graphPath
   case result of
     Left errs ->
       pure (Left errs)
-    Right catboxGraphs ->
+    Right catboxGraph ->
       pure (Right CatboxState { .. })
 
 listFilesRecursive :: FilePath -> FilePath -> IO [FilePath]
@@ -83,40 +77,50 @@ loadFiles inputPath paths = do
 
   Map.fromList <$> traverse loadFile paths
 
-loadGraphs :: FilePath -> IO (Either [Text] (Map FilePath Graph))
-loadGraphs path = do
+loadGraph :: FilePath -> IO (Either [Text] Graph)
+loadGraph path = do
   -- Load this graph
   file <- BSL.readFile path
   case Aeson.eitherDecode file of
     Left msg -> do
       pure (Left [T.pack msg])
-    Right graph -> do
+    Right rawGraph -> do
+      resolveRawGraph path rawGraph
 
-      -- Find dependencies
-      let
-        extractGraph node =
-          case nodeType node of
-            NodeGraph p ->
-              Just (FilePath.combine (FilePath.takeDirectory path) p)
-            NodeFunction "import_graph" ->
-              case filter (\p -> parameterName p == "path") (nodeParameters node) of
-                [param] ->
-                  case parameterSource param of
-                    Constant (CPath p) ->
-                      Just (FilePath.combine (FilePath.takeDirectory path) p)
-                    _ ->
-                      Nothing
-                _ -> Nothing
-            NodeFunction _ ->
-              Nothing
-        dependencies = mapMaybe extractGraph (graphNodes graph)
+resolveRawGraph :: FilePath -> RawGraph -> IO (Either [Text] Graph)
+resolveRawGraph path rawGraph = do
+  let
+    resolveImports :: (Key, Import) -> IO (Either [Text] (Key, Graph))
+    resolveImports (key, pathOrGraph) =
+      case pathOrGraph of
+        Import (Left p) -> do
+          result <- loadGraph (FilePath.combine (FilePath.takeDirectory path) p)
+          case result of
+            Left err ->
+              pure (Left err)
+            Right g ->
+              pure (Right (key, g))
+        Import (Right rg) -> do
+          result <- resolveRawGraph path rg
+          case result of
+            Left err ->
+              pure (Left err)
+            Right g ->
+              pure (Right (key, g))
 
-      results <- traverse loadGraphs dependencies
-      case partitionEithers results of
-        ([], graphs) ->
-          pure (Right (Map.unions (Map.singleton path graph:graphs)))
-        (errs, _) ->
-          pure (Left (concat errs))
+  importResult <- traverse resolveImports (Map.toList (rawGraphImports rawGraph))
+  case partitionEithers importResult of
+    ([], imports) -> do
+      pure (
+        Right Graph
+          { graphImports = Map.fromList imports
+          , graphInputs = rawGraphInputs rawGraph
+          , graphNodes = rawGraphNodes rawGraph
+          , graphOutputs = rawGraphOutputs rawGraph
+          }
+        )
+    (errs, _) ->
+      pure (Left (concat errs))
 
 -- Write results to disk and buffer only if all outputs are available.
 processResults :: FilePath -> Map Text Value -> IO ()

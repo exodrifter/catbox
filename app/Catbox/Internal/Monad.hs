@@ -8,15 +8,13 @@ module Catbox.Internal.Monad
 , evalCatbox
 , runCatbox
 
--- Working directory
-, getWorkingDirectory
-
 -- Files
 , getFilePaths
 , getFileContents
 
 -- Graphs
 , getGraph
+, getImport
 
 -- Results
 , insertKey
@@ -57,12 +55,10 @@ newtype Catbox e a = Catbox (ExceptT e (StateT CatboxState Identity) a)
 
 data CatboxState =
   CatboxState
-    -- The current working directory of the catbox.
-    { catboxWorkingDirectory :: FilePath
     -- A map of file paths relative to the input folder to file contents.
-    , catboxFiles :: Map FilePath Text
-    -- A map of file paths relative to the working directory to file contents.
-    , catboxGraphs :: Map FilePath Graph
+    { catboxFiles :: Map FilePath Text
+    -- The graph that is being executed.
+    , catboxGraph :: Graph
     -- The functions that can be called.
     , catboxFunctions :: Map Text Function
     -- Stores the result for each key in the node graph.
@@ -76,13 +72,6 @@ evalCatbox (Catbox catbox) results =
 runCatbox :: Catbox e a -> CatboxState -> (Either e a, CatboxState)
 runCatbox (Catbox catbox) results =
   runIdentity . flip runStateT results $ runExceptT catbox
-
--------------------------------------------------------------------------------
--- Working Directory
--------------------------------------------------------------------------------
-
-getWorkingDirectory :: Catbox e FilePath
-getWorkingDirectory = gets catboxWorkingDirectory
 
 -------------------------------------------------------------------------------
 -- Files
@@ -104,11 +93,14 @@ getFileContents path = do
 -- Graphs
 -------------------------------------------------------------------------------
 
-getGraph :: FilePath -> Catbox Text Graph
-getGraph path = do
-  graph <- gets catboxGraphs
-  case Map.lookup path graph of
-    Nothing -> throwError ("Cannot find graph \"" <> T.pack path <> "\"")
+getGraph :: Catbox e Graph
+getGraph = gets catboxGraph
+
+getImport :: Key -> Catbox Text Graph
+getImport key = do
+  graph <- getGraph
+  case Map.lookup key (graphImports graph) of
+    Nothing -> throwError ("Cannot find graph \"" <> keyToText key <> "\"")
     Just file -> pure file
 
 -------------------------------------------------------------------------------

@@ -1,6 +1,8 @@
 {-# LANGUAGE DerivingVia #-}
 module Catbox.Internal.Types
-( Graph(graphInputs, graphNodes, graphOutputs)
+( RawGraph(..)
+, Graph(..)
+, Import(..)
 
 -- Parts of the graph
 , Input(inputName, inputType)
@@ -17,13 +19,63 @@ module Catbox.Internal.Types
 , File(..)
 ) where
 
-import Data.Aeson ((.:), (.=))
+import Data.Aeson ((.:), (.:?), (.=), (.!=))
 import Text.Pandoc (Pandoc)
 import qualified Data.Aeson.Types as Aeson
+import qualified Data.Map as Map
 
+data RawGraph =
+  RawGraph
+    { rawGraphImports :: Map Key Import
+    , rawGraphInputs :: [Input]
+    , rawGraphNodes :: [Node]
+    , rawGraphOutputs :: [Output]
+    }
+  deriving (Eq, Show)
+
+instance Aeson.FromJSON RawGraph where
+  parseJSON = Aeson.withObject "RawGraph" $ \v -> do
+    RawGraph
+      <$> v .:? "imports" .!= Map.empty
+      <*> v .: "inputs"
+      <*> v .: "nodes"
+      <*> v .: "outputs"
+
+instance Aeson.ToJSON RawGraph where
+  toJSON v =
+    Aeson.object
+      [ "imports" .= rawGraphImports v
+      , "inputs" .= rawGraphInputs v
+      , "nodes" .= rawGraphNodes v
+      , "outputs" .= rawGraphOutputs v
+      ]
+
+newtype Import = Import (Either FilePath RawGraph)
+  deriving (Eq, Show)
+
+instance Aeson.FromJSON Import where
+  parseJSON v =
+    let
+      graphParser = do
+        graph <- Aeson.parseJSON v
+        pure (Import (Right graph))
+      textParser = do
+        text <- Aeson.parseJSON v
+        pure (Import (Left text))
+    in
+      textParser <|> graphParser
+
+instance Aeson.ToJSON Import where
+  toJSON v =
+    case v of
+      Import (Left path) -> Aeson.toJSON path
+      Import (Right rawGraph) -> Aeson.toJSON rawGraph
+
+-- The same as RawGraph, but with the imports resolved.
 data Graph =
   Graph
-    { graphInputs :: [Input]
+    { graphImports :: Map Key Graph
+    , graphInputs :: [Input]
     , graphNodes :: [Node]
     , graphOutputs :: [Output]
     }
@@ -32,14 +84,16 @@ data Graph =
 instance Aeson.FromJSON Graph where
   parseJSON = Aeson.withObject "Graph" $ \v -> do
     Graph
-      <$> v .: "inputs"
+      <$> v .:? "imports" .!= Map.empty
+      <*> v .: "inputs"
       <*> v .: "nodes"
       <*> v .: "outputs"
 
 instance Aeson.ToJSON Graph where
   toJSON v =
     Aeson.object
-      [ "inputs" .= graphInputs v
+      [ "imports" .= graphImports v
+      , "inputs" .= graphInputs v
       , "nodes" .= graphNodes v
       , "outputs" .= graphOutputs v
       ]
@@ -93,7 +147,7 @@ instance Aeson.ToJSON Node where
 
 data NodeType =
     NodeFunction Text
-  | NodeGraph FilePath
+  | NodeGraph Key
   deriving (Eq, Show)
 
 instance Aeson.FromJSON NodeType where
@@ -196,7 +250,9 @@ type Results = Map Key Value
 newtype Key = Key { keyToText :: Text }
   deriving newtype (Eq, IsString, Ord, Semigroup, Show)
   deriving Aeson.FromJSON via Text
+  deriving Aeson.FromJSONKey via Text
   deriving Aeson.ToJSON via Text
+  deriving Aeson.ToJSONKey via Text
 
 -- The different kinds of values you can pass in catbox.
 data Value =

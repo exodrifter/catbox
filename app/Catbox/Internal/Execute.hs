@@ -6,12 +6,25 @@ import Catbox.Internal.Monad
 import Catbox.Internal.Types
 import qualified Data.Map as Map
 import qualified Data.Text as T
-import qualified System.FilePath as FilePath
 
 processGraph :: Graph -> CatboxState -> Either Text (Map Text Value)
 processGraph graph initialState = do
-  let catbox = processNodes (graphNodes graph)
-  case runCatbox catbox initialState of
+  let
+    catbox = processNodes (graphNodes graph)
+    importedState =
+      foldl'
+        ( \s (key, value) ->
+            s { catboxResults =
+                  Map.insert
+                    ("import." <> key)
+                    (CGraph value)
+                    (catboxResults s)
+              }
+        )
+        initialState
+        (Map.toList (graphImports graph))
+
+  case runCatbox catbox importedState of
     (Left errs, _) -> Left errs
     (Right (), finalState) ->
       -- Filter the final state for the outputs
@@ -75,19 +88,15 @@ invoke nodeType params key =
       fn <- getFunction name
       functionExec fn params key
 
-    NodeGraph graphPath -> do
-      -- The graph path is relative to the graph we are currently invoking.
-      workingDirectory <- getWorkingDirectory
-      let newPath = FilePath.combine workingDirectory graphPath
-      graph <- getGraph newPath
+    NodeGraph importKey -> do
+      graph <- getImport importKey
 
       -- Set the initial state of the graph.
       initialState <- get
       let
         toInput (name, v) = (Key ("in." <> name), v)
         sandboxState = initialState
-          { catboxWorkingDirectory = FilePath.takeDirectory newPath
-          , catboxResults = Map.fromList (toInput <$> Map.toList params)
+          { catboxResults = Map.fromList (toInput <$> Map.toList params)
           }
 
       case processGraph graph sandboxState of
