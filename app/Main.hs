@@ -90,8 +90,8 @@ loadGraph path = do
 resolveRawGraph :: FilePath -> RawGraph -> IO (Either [Text] Graph)
 resolveRawGraph path rawGraph = do
   let
-    resolveImports :: (Key, Import) -> IO (Either [Text] (Key, Graph))
-    resolveImports (key, pathOrGraph) =
+    resolveImports :: (Text, Import) -> IO (Either [Text] (Text, Graph))
+    resolveImports (name, pathOrGraph) =
       case pathOrGraph of
         Import (Left p) -> do
           result <- loadGraph (FilePath.combine (FilePath.takeDirectory path) p)
@@ -99,14 +99,14 @@ resolveRawGraph path rawGraph = do
             Left err ->
               pure (Left err)
             Right g ->
-              pure (Right (key, g))
+              pure (Right (name, g))
         Import (Right rg) -> do
           result <- resolveRawGraph path rg
           case result of
             Left err ->
               pure (Left err)
             Right g ->
-              pure (Right (key, g))
+              pure (Right (name, g))
 
   importResult <- traverse resolveImports (Map.toList (rawGraphImports rawGraph))
   case partitionEithers importResult of

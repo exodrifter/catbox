@@ -37,7 +37,7 @@ parseMarkdownFunction =
     functionExec params key = do
       text <- textParam "text" params
       pandoc <- runPandocPure (Pandoc.readMarkdown Pandoc.def text)
-      insertKey (key <> ".result") (CPandoc pandoc)
+      insertKey (key <> "result") (CPandoc pandoc)
 
 renderHtml5Function :: Function
 renderHtml5Function =
@@ -47,4 +47,4 @@ renderHtml5Function =
       pandoc <- pandocParam "pandoc" params
       html <- runPandocPure (Pandoc.writeHtml5 Pandoc.def pandoc)
       let text = TL.toStrict (Blaze.renderHtml html)
-      insertKey (key <> ".result") (CText text)
+      insertKey (key <> "result") (CText text)

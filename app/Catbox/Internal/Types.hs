@@ -13,7 +13,7 @@ module Catbox.Internal.Types
 
 -- Primitive types used by the graph
 , Results
-, Key(..)
+, Key, keyFromText, keyToText
 , Value(..)
 , File(..)
 , Object(..)
@@ -23,10 +23,11 @@ import Data.Aeson ((.:), (.:?), (.=), (.!=))
 import Text.Pandoc (Pandoc)
 import qualified Data.Aeson.Types as Aeson
 import qualified Data.Map as Map
+import qualified Data.Text as T
 
 data RawGraph =
   RawGraph
-    { rawGraphImports :: Map Key Import
+    { rawGraphImports :: Map Text Import
     , rawGraphInputs :: [Input]
     , rawGraphNodes :: [Node]
     , rawGraphOutputs :: [Output]
@@ -74,7 +75,7 @@ instance Aeson.ToJSON Import where
 -- The same as RawGraph, but with the imports resolved.
 data Graph =
   Graph
-    { graphImports :: Map Key Graph
+    { graphImports :: Map Text Graph
     , graphInputs :: [Input]
     , graphNodes :: [Node]
     , graphOutputs :: [Output]
@@ -124,7 +125,7 @@ instance Aeson.ToJSON Input where
 
 data Node =
   Node
-    { nodeId :: Text
+    { nodeId :: Key
     , nodeFunction :: Text
     , nodeParameters :: [Parameter]
     }
@@ -220,12 +221,23 @@ instance Aeson.ToJSON Output where
 type Results = Map Key Value
 
 -- Represents the key for a result in a node graph.
-newtype Key = Key { keyToText :: Text }
-  deriving newtype (Eq, IsString, Ord, Semigroup, Show)
-  deriving Aeson.FromJSON via Text
-  deriving Aeson.FromJSONKey via Text
-  deriving Aeson.ToJSON via Text
-  deriving Aeson.ToJSONKey via Text
+newtype Key = Key [Text]
+  deriving newtype (Eq, Ord, Semigroup, Show)
+
+instance IsString Key where
+  fromString = keyFromText . T.pack
+
+instance Aeson.FromJSON Key where
+  parseJSON = Aeson.withText "Key" $ pure . keyFromText
+
+instance Aeson.ToJSON Key where
+  toJSON = Aeson.String . keyToText
+
+keyFromText :: Text -> Key
+keyFromText = Key . T.split (== '.')
+
+keyToText :: Key -> Text
+keyToText (Key parts) = T.intercalate "." parts
 
 -- The different kinds of values you can pass in catbox.
 data Value =

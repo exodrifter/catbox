@@ -35,7 +35,7 @@ execGraphFunction =
         Right finalState -> do
           let
             loadResult (name, v) =
-              insertKey (key <> "." <> Key name) v
+              insertKey (key <> keyFromText name) v
           traverse_ loadResult (Map.toList finalState)
 
 mapFunction :: Function
@@ -44,7 +44,7 @@ mapFunction =
   where
     functionExec params key = do
       graph <- graphParam "_graph" params
-      inputName <- Key . ("in." <> ) <$> textParam "_input" params
+      inputName <- ("in" <>) . keyFromText <$> textParam "_input" params
       list <- listParam "_list" params
 
       let
@@ -59,7 +59,7 @@ mapFunction =
         )
         list
 
-      insertKey (key <> ".result") (CList (catMaybes results))
+      insertKey (key <> "result") (CList (catMaybes results))
 
     getResults :: Graph -> CatboxState -> Catbox Text (Maybe Value)
     getResults graph s =
@@ -83,6 +83,6 @@ paramsToGraphInputs params =
     toInput (name, v) =
       if "_" `T.isPrefixOf` name
       then Nothing
-      else Just (Key ("in." <> name), v)
+      else Just ("in" <> keyFromText name, v)
   in
     Map.fromList (mapMaybe toInput (Map.toList params))

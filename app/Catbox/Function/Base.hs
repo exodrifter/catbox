@@ -23,7 +23,7 @@ concatFunction =
       a <- textParam "a" params
       b <- textParam "b" params
       insertKey
-        (key <> ".result")
+        (key <> "result")
         (CText (a <> b))
 
 lowercaseFunction :: Function
@@ -33,7 +33,7 @@ lowercaseFunction =
     functionExec params key = do
       text <- textParam "text" params
       insertKey
-        (key <> ".result")
+        (key <> "result")
         (CText (T.toLower text))
 
 uppercaseFunction :: Function
@@ -43,5 +43,5 @@ uppercaseFunction =
     functionExec params key = do
       text <- textParam "text" params
       insertKey
-        (key <> ".result")
+        (key <> "result")
         (CText (T.toUpper text))

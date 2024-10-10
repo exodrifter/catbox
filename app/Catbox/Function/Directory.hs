@@ -20,5 +20,5 @@ listFilesFunction =
       path <- pathParam "path" params
       files <- getFilePaths path
       insertKey
-        (key <> ".result")
+        (key <> "result")
         (CList (CPath <$> files))

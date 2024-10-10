@@ -12,10 +12,6 @@ module Catbox.Internal.Monad
 , getFilePaths
 , getFileContents
 
--- Graphs
-, getGraph
-, getImport
-
 -- Results
 , insertKey
 , resolveParameters
@@ -88,20 +84,6 @@ getFileContents path = do
   files <- gets catboxFiles
   case Map.lookup path files of
     Nothing -> throwError ("Cannot find file \"" <> T.pack path <> "\"")
-    Just file -> pure file
-
--------------------------------------------------------------------------------
--- Graphs
--------------------------------------------------------------------------------
-
-getGraph :: Catbox e Graph
-getGraph = gets catboxGraph
-
-getImport :: Key -> Catbox Text Graph
-getImport key = do
-  graph <- getGraph
-  case Map.lookup key (graphImports graph) of
-    Nothing -> throwError ("Cannot find graph \"" <> keyToText key <> "\"")
     Just file -> pure file
 
 -------------------------------------------------------------------------------

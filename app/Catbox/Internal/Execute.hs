@@ -13,10 +13,10 @@ processGraph graph initialState = do
     catbox = processNodes (graphNodes graph)
     importedState =
       foldl'
-        ( \s (key, value) ->
+        ( \s (name, value) ->
             s { catboxResults =
                   Map.insert
-                    ("import." <> key)
+                    ("import" <> keyFromText name)
                     (CGraph value)
                     (catboxResults s)
               }
@@ -76,7 +76,7 @@ processNodes nodes = do
 processNode :: Node -> Catbox Text ()
 processNode node = do
   args <- resolveParameters (nodeParameters node)
-  invoke (nodeFunction node) args (Key (nodeId node))
+  invoke (nodeFunction node) args (nodeId node)
 
 invoke :: Text -> Map Text Value -> Key -> Catbox Text ()
 invoke name params key = do
