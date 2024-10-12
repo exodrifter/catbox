@@ -18,11 +18,15 @@ changeExtensionFunction :: Function
 changeExtensionFunction =
   Function
     { functionName = "change_extension"
-    , functionParams = Map.fromList
+    , functionInputs = Map.fromList
         [ ("extension", TText)
         , ("path", TPath)
         ]
-    , functionEnableVariableParams = False
+    , functionOutputs = Map.fromList
+        [ ("result", TPath)
+        ]
+    , functionVariableInputs = False
+    , functionVariableOutputs = False
     , ..
     }
   where

@@ -34,10 +34,14 @@ parseMarkdownFunction :: Function
 parseMarkdownFunction =
   Function
     { functionName = "parse_markdown"
-    , functionParams = Map.fromList
+    , functionInputs = Map.fromList
         [ ("text", TText)
         ]
-    , functionEnableVariableParams = False
+    , functionOutputs = Map.fromList
+        [ ("result", TPandoc)
+        ]
+    , functionVariableInputs = False
+    , functionVariableOutputs = False
     , ..
     }
   where
@@ -50,10 +54,14 @@ renderHtml5Function :: Function
 renderHtml5Function =
   Function
     { functionName = "render_html5"
-    , functionParams = Map.fromList
+    , functionInputs = Map.fromList
         [ ("pandoc", TPandoc)
         ]
-    , functionEnableVariableParams = False
+    , functionOutputs = Map.fromList
+        [ ("results", TText)
+        ]
+    , functionVariableInputs = False
+    , functionVariableOutputs = False
     , ..
     }
   where

@@ -17,10 +17,14 @@ fileContentsFunction :: Function
 fileContentsFunction =
   Function
     { functionName = "file_contents"
-    , functionParams = Map.fromList
+    , functionInputs = Map.fromList
         [ ("path", TPath)
         ]
-    , functionEnableVariableParams = False
+    , functionOutputs = Map.fromList
+        [ ("result", TText)
+        ]
+    , functionVariableInputs = False
+    , functionVariableOutputs = False
     , ..
     }
   where
@@ -35,11 +39,15 @@ makeFileFunction :: Function
 makeFileFunction =
   Function
     { functionName = "make_file"
-    , functionParams = Map.fromList
+    , functionInputs = Map.fromList
         [ ("path", TPath)
         , ("text", TText)
         ]
-    , functionEnableVariableParams = False
+    , functionOutputs = Map.fromList
+        [ ("result", TFile)
+        ]
+    , functionVariableInputs = False
+    , functionVariableOutputs = False
     , ..
     }
   where

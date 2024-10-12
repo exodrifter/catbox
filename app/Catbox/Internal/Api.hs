@@ -13,23 +13,29 @@ import qualified Data.Aeson.Types as Aeson
 data FunctionApi =
   FunctionApi
     { functionApiName :: Text
-    , functionApiParams :: Map Text ValueType
-    , functionApiEnableVariableParams :: Bool
+    , functionApiInputs :: Map Text ValueType
+    , functionApiOutputs :: Map Text ValueType
+    , functionApiVariableInputs :: Bool
+    , functionApiVariableOutputs :: Bool
     }
 
 instance Aeson.FromJSON FunctionApi where
   parseJSON = Aeson.withObject "FunctionApi" $ \v -> do
     FunctionApi
       <$> v .: "name"
-      <*> v .: "params"
-      <*> v .: "variable"
+      <*> v .: "inputs"
+      <*> v .: "outputs"
+      <*> v .: "variable_inputs"
+      <*> v .: "variable_outputs"
 
 instance Aeson.ToJSON FunctionApi where
   toJSON v =
     Aeson.object
       [ "name" .= functionApiName v
-      , "params" .= functionApiParams v
-      , "variable" .= functionApiEnableVariableParams v
+      , "inputs" .= functionApiInputs v
+      , "outputs" .= functionApiOutputs v
+      , "variable_inputs" .= functionApiVariableInputs v
+      , "variable_outputs" .= functionApiVariableOutputs v
       ]
 
 extractFunctionApis :: [Function] -> [FunctionApi]
@@ -39,6 +45,8 @@ extractFunctionApi :: Function -> FunctionApi
 extractFunctionApi Function {..} =
   FunctionApi
     { functionApiName = functionName
-    , functionApiParams = functionParams
-    , functionApiEnableVariableParams = functionEnableVariableParams
+    , functionApiInputs = functionInputs
+    , functionApiOutputs = functionOutputs
+    , functionApiVariableInputs = functionVariableInputs
+    , functionApiVariableOutputs = functionVariableOutputs
     }

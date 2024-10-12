@@ -16,10 +16,14 @@ listFilesFunction :: Function
 listFilesFunction =
   Function
     { functionName = "list_files"
-    , functionParams = Map.fromList
+    , functionInputs = Map.fromList
         [ ("path", TPath)
         ]
-    , functionEnableVariableParams = False
+    , functionOutputs = Map.fromList
+        [ ("result", TList)
+        ]
+    , functionVariableInputs = False
+    , functionVariableOutputs = False
     , ..
     }
   where

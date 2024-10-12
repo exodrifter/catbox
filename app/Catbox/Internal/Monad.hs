@@ -94,8 +94,10 @@ getFileContents path = do
 data Function =
   Function
     { functionName :: Text
-    , functionParams :: Map Text ValueType
-    , functionEnableVariableParams :: Bool
+    , functionInputs :: Map Text ValueType
+    , functionOutputs :: Map Text ValueType
+    , functionVariableInputs :: Bool
+    , functionVariableOutputs :: Bool
     , functionExec :: Map Text Value -> Key -> Catbox Text ()
     }
 

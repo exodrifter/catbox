@@ -20,11 +20,15 @@ concatFunction :: Function
 concatFunction =
   Function
     { functionName = "concat"
-    , functionParams = Map.fromList
+    , functionInputs = Map.fromList
         [ ("a", TText)
         , ("b", TText)
         ]
-    , functionEnableVariableParams = False
+    , functionOutputs = Map.fromList
+        [ ("result", TText)
+        ]
+    , functionVariableInputs = False
+    , functionVariableOutputs = False
     , ..
     }
   where
@@ -39,10 +43,12 @@ deconstructFunction :: Function
 deconstructFunction =
   Function
     { functionName = "deconstruct"
-    , functionParams = Map.fromList
-      [ ("object", TObject)
-      ]
-    , functionEnableVariableParams = False
+    , functionInputs = Map.fromList
+        [ ("object", TObject)
+        ]
+    , functionOutputs = Map.empty
+    , functionVariableInputs = False
+    , functionVariableOutputs = True
     , ..
     }
   where
@@ -55,10 +61,14 @@ lowercaseFunction :: Function
 lowercaseFunction =
   Function
     { functionName = "lowercase"
-    , functionParams = Map.fromList
+    , functionInputs = Map.fromList
         [ ("text", TText)
         ]
-    , functionEnableVariableParams = False
+    , functionOutputs = Map.fromList
+        [ ("result", TText)
+        ]
+    , functionVariableInputs = False
+    , functionVariableOutputs = False
     , ..
     }
   where
@@ -72,10 +82,14 @@ uppercaseFunction :: Function
 uppercaseFunction =
   Function
     { functionName = "uppercase"
-    , functionParams = Map.fromList
+    , functionInputs = Map.fromList
         [ ("text", TText)
         ]
-    , functionEnableVariableParams = False
+    , functionOutputs = Map.fromList
+        [ ("result", TText)
+        ]
+    , functionVariableInputs = False
+    , functionVariableOutputs = False
     , ..
     }
   where

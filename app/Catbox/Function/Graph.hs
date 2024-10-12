@@ -19,10 +19,12 @@ execGraphFunction :: Function
 execGraphFunction =
   Function
     { functionName = "exec_graph"
-    , functionParams = Map.fromList
+    , functionInputs = Map.fromList
         [ ("_graph", TGraph)
         ]
-    , functionEnableVariableParams = True
+    , functionOutputs = Map.empty
+    , functionVariableInputs = True
+    , functionVariableOutputs = True
     , ..
     }
   where
@@ -49,12 +51,14 @@ mapFunction :: Function
 mapFunction =
   Function
     { functionName = "map"
-    , functionParams = Map.fromList
+    , functionInputs = Map.fromList
         [ ("_graph", TGraph)
         , ("_input", TText)
         , ("_list", TList)
         ]
-    , functionEnableVariableParams = True
+    , functionOutputs = Map.empty
+    , functionVariableInputs = True
+    , functionVariableOutputs = True
     , ..
     }
   where
