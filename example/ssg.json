@@ -79,6 +79,39 @@
             ]
         },
         {
+            "id": "remap_links",
+            "function": "remap_link_extension",
+            "parameters": [
+                {
+                    "name": "pandoc",
+                    "source": {
+                        "type": "connection",
+                        "value": "parse.result"
+                    }
+                },
+                {
+                    "name": "from",
+                    "source": {
+                        "type": "constant",
+                        "value": {
+                            "type": "text",
+                            "value": ".md"
+                        }
+                    }
+                },
+                {
+                    "name": "to",
+                    "source": {
+                        "type": "constant",
+                        "value": {
+                            "type": "text",
+                            "value": ".html"
+                        }
+                    }
+                }
+            ]
+        },
+        {
             "id": "render",
             "function": "render_html5",
             "parameters": [
@@ -86,7 +119,7 @@
                     "name": "pandoc",
                     "source": {
                         "type": "connection",
-                        "value": "parse.result"
+                        "value": "remap_links.result"
                     }
                 }
             ]
