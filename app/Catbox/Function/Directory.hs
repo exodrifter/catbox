@@ -14,7 +14,14 @@ directoryFunctions =
 
 listFilesFunction :: Function
 listFilesFunction =
-  Function { functionName = "list_files", .. }
+  Function
+    { functionName = "list_files"
+    , functionParams = Map.fromList
+        [ ("path", TPath)
+        ]
+    , functionEnableVariableParams = False
+    , ..
+    }
   where
     functionExec params key = do
       path <- pathParam "path" params

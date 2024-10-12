@@ -21,8 +21,19 @@ main = do
       ( fullDesc
      <> progDesc "Process a set of documents using a catbox graph."
      <> header "catbox - document transformation application" )
-  Options {..} <- execParser opts
 
+  cmd <- execParser opts
+  case cmd of
+    ApiCommand () -> doApiCommand
+    GraphCommand opt -> doGraphCommand opt
+
+doApiCommand :: IO ()
+doApiCommand = do
+  BSL.putStr (Aeson.encode (extractFunctionApis (Map.elems standardFunctions)))
+  BSL.putStr "\n"
+
+doGraphCommand :: GraphOptions -> IO ()
+doGraphCommand GraphOptions {..} = do
   -- Read the graph
   result <- createCatboxState inputDirectory graphPath standardFunctions
   case result of
@@ -171,26 +182,53 @@ processResult outputDirectory (outputName, val) = do
 -- Command line parsing
 -------------------------------------------------------------------------------
 
-data Options =
-  Options
+data Command
+  = ApiCommand ()
+  | GraphCommand GraphOptions
+
+data GraphOptions =
+  GraphOptions
     { graphPath :: FilePath
     , inputDirectory :: FilePath
     , outputDirectory :: FilePath
     }
 
-catboxParser :: Parser Options
-catboxParser = do
+catboxParser :: Parser Command
+catboxParser = hsubparser
+  (  command "api" (ApiCommand <$> apiOptionsParserInfo)
+  <> command "build" (GraphCommand <$> graphOptionsParserInfo)
+  )
+
+apiOptionsParserInfo :: ParserInfo ()
+apiOptionsParserInfo =
+  info (pure ())
+      ( fullDesc
+     <> progDesc "Return the graph API JSON."
+      )
+
+graphOptionsParserInfo :: ParserInfo GraphOptions
+graphOptionsParserInfo =
+  info graphOptionsParser
+      ( fullDesc
+     <> progDesc "Process a set of documents using a catbox graph."
+      )
+
+graphOptionsParser :: Parser GraphOptions
+graphOptionsParser = do
   graphPath <- argument str (metavar "GRAPH")
   inputDirectory <-
     strOption
       (  long "input"
+      <> short 'i'
       <> metavar "PATH"
       <> help "The path to the input directory."
       )
   outputDirectory <-
     strOption
       (  long "output"
+      <> short 'o'
       <> metavar "PATH"
       <> help "The path to the output directory."
       )
-  pure Options { .. }
+
+  pure GraphOptions {..}

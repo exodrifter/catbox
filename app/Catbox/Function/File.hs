@@ -15,7 +15,14 @@ fileFunctions =
 
 fileContentsFunction :: Function
 fileContentsFunction =
-  Function { functionName = "file_contents", .. }
+  Function
+    { functionName = "file_contents"
+    , functionParams = Map.fromList
+        [ ("path", TPath)
+        ]
+    , functionEnableVariableParams = False
+    , ..
+    }
   where
     functionExec params key = do
       path <- pathParam "path" params
@@ -26,7 +33,15 @@ fileContentsFunction =
 
 makeFileFunction :: Function
 makeFileFunction =
-  Function { functionName = "make_file", .. }
+  Function
+    { functionName = "make_file"
+    , functionParams = Map.fromList
+        [ ("path", TPath)
+        , ("text", TText)
+        ]
+    , functionEnableVariableParams = False
+    , ..
+    }
   where
     functionExec params key = do
       path <- pathParam "path" params

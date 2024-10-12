@@ -16,7 +16,15 @@ pathFunctions =
 
 changeExtensionFunction :: Function
 changeExtensionFunction =
-  Function { functionName = "change_extension", .. }
+  Function
+    { functionName = "change_extension"
+    , functionParams = Map.fromList
+        [ ("extension", TText)
+        , ("path", TPath)
+        ]
+    , functionEnableVariableParams = False
+    , ..
+    }
   where
     functionExec params key = do
       extension <- textParam "extension" params

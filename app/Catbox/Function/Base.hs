@@ -18,7 +18,15 @@ baseFunctions =
 
 concatFunction :: Function
 concatFunction =
-  Function { functionName = "concat", .. }
+  Function
+    { functionName = "concat"
+    , functionParams = Map.fromList
+        [ ("a", TText)
+        , ("b", TText)
+        ]
+    , functionEnableVariableParams = False
+    , ..
+    }
   where
     functionExec params key = do
       a <- textParam "a" params
@@ -29,7 +37,14 @@ concatFunction =
 
 deconstructFunction :: Function
 deconstructFunction =
-  Function {functionName = "deconstruct", .. }
+  Function
+    { functionName = "deconstruct"
+    , functionParams = Map.fromList
+      [ ("object", TObject)
+      ]
+    , functionEnableVariableParams = False
+    , ..
+    }
   where
     functionExec params key = do
       object <- objectParam "object" params
@@ -38,7 +53,14 @@ deconstructFunction =
 
 lowercaseFunction :: Function
 lowercaseFunction =
-  Function { functionName = "lowercase", .. }
+  Function
+    { functionName = "lowercase"
+    , functionParams = Map.fromList
+        [ ("text", TText)
+        ]
+    , functionEnableVariableParams = False
+    , ..
+    }
   where
     functionExec params key = do
       text <- textParam "text" params
@@ -48,7 +70,14 @@ lowercaseFunction =
 
 uppercaseFunction :: Function
 uppercaseFunction =
-  Function { functionName = "uppercase", .. }
+  Function
+    { functionName = "uppercase"
+    , functionParams = Map.fromList
+        [ ("text", TText)
+        ]
+    , functionEnableVariableParams = False
+    , ..
+    }
   where
     functionExec params key = do
       text <- textParam "text" params

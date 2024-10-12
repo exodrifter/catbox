@@ -32,7 +32,14 @@ runPandocPure pandoc =
 
 parseMarkdownFunction :: Function
 parseMarkdownFunction =
-  Function { functionName = "parse_markdown", .. }
+  Function
+    { functionName = "parse_markdown"
+    , functionParams = Map.fromList
+        [ ("text", TText)
+        ]
+    , functionEnableVariableParams = False
+    , ..
+    }
   where
     functionExec params key = do
       text <- textParam "text" params
@@ -41,7 +48,14 @@ parseMarkdownFunction =
 
 renderHtml5Function :: Function
 renderHtml5Function =
-  Function { functionName = "render_html5", .. }
+  Function
+    { functionName = "render_html5"
+    , functionParams = Map.fromList
+        [ ("pandoc", TPandoc)
+        ]
+    , functionEnableVariableParams = False
+    , ..
+    }
   where
     functionExec params key = do
       pandoc <- pandocParam "pandoc" params

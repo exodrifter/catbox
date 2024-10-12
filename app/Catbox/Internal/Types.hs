@@ -15,6 +15,7 @@ module Catbox.Internal.Types
 , Results
 , Key, keyFromText, keyToText
 , Value(..)
+, ValueType(..)
 , File(..)
 , Object(..)
 ) where
@@ -252,55 +253,88 @@ data Value =
 
 instance Aeson.FromJSON Value where
   parseJSON = Aeson.withObject "Value" $ \v -> do
-    typ <- v .: "type" :: Aeson.Parser Text
+    typ <- v .: "type" :: Aeson.Parser ValueType
     case typ of
-      "file" -> CFile <$> v .: "value"
-      "graph" -> CGraph <$> v .: "value"
-      "list" -> CList <$> v .: "value"
-      "object" -> CObject <$> v .: "value"
-      "pandoc" -> CPandoc <$> v .: "value"
-      "path" -> CPath <$> v .: "value"
-      "text" -> CText <$> v .: "value"
-      _ -> fail (T.unpack ("unknown value type \"" <> typ <> "\""))
+      TFile -> CFile <$> v .: "value"
+      TGraph -> CGraph <$> v .: "value"
+      TList -> CList <$> v .: "value"
+      TObject -> CObject <$> v .: "value"
+      TPandoc -> CPandoc <$> v .: "value"
+      TPath -> CPath <$> v .: "value"
+      TText -> CText <$> v .: "value"
 
 instance Aeson.ToJSON Value where
   toJSON v =
     case v of
       CFile a ->
         Aeson.object
-          [ "type" .= ("file" :: Text)
+          [ "type" .= TFile
           , "value" .= a
           ]
       CGraph a ->
         Aeson.object
-          [ "type" .= ("graph" :: Text)
+          [ "type" .= TGraph
           , "value" .= a
           ]
       CList a ->
         Aeson.object
-          [ "type" .= ("list" :: Text)
+          [ "type" .= TList
           , "value" .= a
           ]
       CObject a ->
         Aeson.object
-          [ "type" .= ("object" :: Text)
+          [ "type" .= TObject
           , "value" .= a
           ]
       CPandoc a ->
         Aeson.object
-          [ "type" .= ("pandoc" :: Text)
+          [ "type" .= TPandoc
           , "value" .= a
           ]
       CPath a ->
         Aeson.object
-          [ "type" .= ("path" :: Text)
+          [ "type" .= TPath
           , "value" .= a
           ]
       CText a ->
         Aeson.object
-          [ "type" .= ("text" :: Text)
+          [ "type" .= TText
           , "value" .= a
           ]
+
+data ValueType =
+    TFile
+  | TGraph
+  | TList
+  | TObject
+  | TPandoc
+  | TPath
+  | TText
+
+instance Aeson.FromJSON ValueType where
+  parseJSON = Aeson.withObject "Value" $ \v -> do
+    typ <- v .: "type" :: Aeson.Parser Text
+    case typ of
+      "file" -> pure TFile
+      "graph" -> pure TGraph
+      "list" -> pure TList
+      "object" -> pure TObject
+      "pandoc" -> pure TPandoc
+      "path" -> pure TPath
+      "text" -> pure TText
+      _ -> fail (T.unpack ("unknown value type \"" <> typ <> "\""))
+
+
+instance Aeson.ToJSON ValueType where
+  toJSON v =
+    case v of
+      TFile -> Aeson.String "file"
+      TGraph -> Aeson.String "graph"
+      TList -> Aeson.String "list"
+      TObject -> Aeson.String "object"
+      TPandoc -> Aeson.String "pandoc"
+      TPath -> Aeson.String "path"
+      TText -> Aeson.String "text"
 
 data File =
   File

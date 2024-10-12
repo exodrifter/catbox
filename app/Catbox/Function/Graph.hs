@@ -17,7 +17,14 @@ graphFunctions =
 
 execGraphFunction :: Function
 execGraphFunction =
-  Function { functionName = "exec_graph", .. }
+  Function
+    { functionName = "exec_graph"
+    , functionParams = Map.fromList
+        [ ("_graph", TGraph)
+        ]
+    , functionEnableVariableParams = True
+    , ..
+    }
   where
     functionExec params key = do
       graph <- graphParam "_graph" params
@@ -40,7 +47,16 @@ execGraphFunction =
 
 mapFunction :: Function
 mapFunction =
-  Function { functionName = "map", .. }
+  Function
+    { functionName = "map"
+    , functionParams = Map.fromList
+        [ ("_graph", TGraph)
+        , ("_input", TText)
+        , ("_list", TList)
+        ]
+    , functionEnableVariableParams = True
+    , ..
+    }
   where
     functionExec params key = do
       graph <- graphParam "_graph" params
