@@ -312,8 +312,7 @@ data ValueType =
   | TText
 
 instance Aeson.FromJSON ValueType where
-  parseJSON = Aeson.withObject "Value" $ \v -> do
-    typ <- v .: "type" :: Aeson.Parser Text
+  parseJSON = Aeson.withText "Value" $ \typ -> do
     case typ of
       "file" -> pure TFile
       "graph" -> pure TGraph
