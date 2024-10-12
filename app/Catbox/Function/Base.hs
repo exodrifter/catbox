@@ -5,39 +5,12 @@ module Catbox.Function.Base
 import Catbox.Internal.Monad
 import Catbox.Internal.Types
 import qualified Data.Map as Map
-import qualified Data.Text as T
 
 baseFunctions :: Map Text Function
 baseFunctions =
   Map.fromList $ (\g -> (functionName g, g)) <$>
-    [ concatFunction
-    , deconstructFunction
-    , lowercaseFunction
-    , uppercaseFunction
+    [ deconstructFunction
     ]
-
-concatFunction :: Function
-concatFunction =
-  Function
-    { functionName = "concat"
-    , functionInputs = Map.fromList
-        [ ("a", TText)
-        , ("b", TText)
-        ]
-    , functionOutputs = Map.fromList
-        [ ("result", TText)
-        ]
-    , functionVariableInputs = False
-    , functionVariableOutputs = False
-    , ..
-    }
-  where
-    functionExec params key = do
-      a <- textParam "a" params
-      b <- textParam "b" params
-      insertKey
-        (key <> "result")
-        (CText (a <> b))
 
 deconstructFunction :: Function
 deconstructFunction =
@@ -56,45 +29,3 @@ deconstructFunction =
       object <- objectParam "object" params
       let writeKeys (k, v) = insertKey (key <> keyFromText k) v
       traverse_ writeKeys (Map.toList (objectFields object))
-
-lowercaseFunction :: Function
-lowercaseFunction =
-  Function
-    { functionName = "lowercase"
-    , functionInputs = Map.fromList
-        [ ("text", TText)
-        ]
-    , functionOutputs = Map.fromList
-        [ ("result", TText)
-        ]
-    , functionVariableInputs = False
-    , functionVariableOutputs = False
-    , ..
-    }
-  where
-    functionExec params key = do
-      text <- textParam "text" params
-      insertKey
-        (key <> "result")
-        (CText (T.toLower text))
-
-uppercaseFunction :: Function
-uppercaseFunction =
-  Function
-    { functionName = "uppercase"
-    , functionInputs = Map.fromList
-        [ ("text", TText)
-        ]
-    , functionOutputs = Map.fromList
-        [ ("result", TText)
-        ]
-    , functionVariableInputs = False
-    , functionVariableOutputs = False
-    , ..
-    }
-  where
-    functionExec params key = do
-      text <- textParam "text" params
-      insertKey
-        (key <> "result")
-        (CText (T.toUpper text))

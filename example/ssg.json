@@ -20,52 +20,6 @@
             ]
         },
         {
-            "id": "upper",
-            "function": "uppercase",
-            "parameters": [
-                {
-                    "name": "text",
-                    "source": {
-                        "type": "connection",
-                        "value": "read.result"
-                    }
-                }
-            ]
-        },
-        {
-            "id": "lower",
-            "function": "lowercase",
-            "parameters": [
-                {
-                    "name": "text",
-                    "source": {
-                        "type": "connection",
-                        "value": "read.result"
-                    }
-                }
-            ]
-        },
-        {
-            "id": "concat",
-            "function": "concat",
-            "parameters": [
-                {
-                    "name": "a",
-                    "source": {
-                        "type": "connection",
-                        "value": "upper.result"
-                    }
-                },
-                {
-                    "name": "b",
-                    "source": {
-                        "type": "connection",
-                        "value": "lower.result"
-                    }
-                }
-            ]
-        },
-        {
             "id": "parse",
             "function": "parse_markdown",
             "parameters": [
@@ -73,7 +27,7 @@
                     "name": "text",
                     "source": {
                         "type": "connection",
-                        "value": "concat.result"
+                        "value": "read.result"
                     }
                 }
             ]
