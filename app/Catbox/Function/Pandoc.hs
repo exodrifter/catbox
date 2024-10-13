@@ -63,7 +63,7 @@ renderHtml5Function =
         [ ("pandoc", TPandoc)
         ]
     , functionOutputs = Map.fromList
-        [ ("results", TText)
+        [ ("result", TText)
         ]
     , functionVariableInputs = False
     , functionVariableOutputs = False

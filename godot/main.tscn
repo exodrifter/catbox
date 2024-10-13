@@ -9,7 +9,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_yl5ks")
-api_json = "[{\"inputs\":{\"extension\":\"text\",\"path\":\"path\"},\"name\":\"change_extension\",\"outputs\":{\"result\":\"path\"},\"variable_inputs\":false,\"variable_outputs\":false},{\"inputs\":{\"object\":\"object\"},\"name\":\"deconstruct\",\"outputs\":{},\"variable_inputs\":false,\"variable_outputs\":true},{\"inputs\":{\"_graph\":\"graph\"},\"name\":\"exec_graph\",\"outputs\":{},\"variable_inputs\":true,\"variable_outputs\":true},{\"inputs\":{\"path\":\"path\"},\"name\":\"file_contents\",\"outputs\":{\"result\":\"text\"},\"variable_inputs\":false,\"variable_outputs\":false},{\"inputs\":{\"path\":\"path\"},\"name\":\"list_files\",\"outputs\":{\"result\":\"list\"},\"variable_inputs\":false,\"variable_outputs\":false},{\"inputs\":{\"path\":\"path\",\"text\":\"text\"},\"name\":\"make_file\",\"outputs\":{\"result\":\"file\"},\"variable_inputs\":false,\"variable_outputs\":false},{\"inputs\":{\"_graph\":\"graph\",\"_input\":\"text\",\"_list\":\"list\"},\"name\":\"map\",\"outputs\":{},\"variable_inputs\":true,\"variable_outputs\":true},{\"inputs\":{\"text\":\"text\"},\"name\":\"parse_markdown\",\"outputs\":{\"result\":\"pandoc\"},\"variable_inputs\":false,\"variable_outputs\":false},{\"inputs\":{\"pandoc\":\"pandoc\"},\"name\":\"remap_link_extension\",\"outputs\":{\"result\":\"pandoc\"},\"variable_inputs\":false,\"variable_outputs\":false},{\"inputs\":{\"pandoc\":\"pandoc\"},\"name\":\"render_html5\",\"outputs\":{\"results\":\"text\"},\"variable_inputs\":false,\"variable_outputs\":false}]"
+api_json = "[{\"inputs\":{\"extension\":\"text\",\"path\":\"path\"},\"name\":\"change_extension\",\"outputs\":{\"result\":\"path\"},\"variable_inputs\":false,\"variable_outputs\":false},{\"inputs\":{\"object\":\"object\"},\"name\":\"deconstruct\",\"outputs\":{},\"variable_inputs\":false,\"variable_outputs\":true},{\"inputs\":{\"_graph\":\"graph\"},\"name\":\"exec_graph\",\"outputs\":{},\"variable_inputs\":true,\"variable_outputs\":true},{\"inputs\":{\"path\":\"path\"},\"name\":\"file_contents\",\"outputs\":{\"result\":\"text\"},\"variable_inputs\":false,\"variable_outputs\":false},{\"inputs\":{\"path\":\"path\"},\"name\":\"list_files\",\"outputs\":{\"result\":\"list\"},\"variable_inputs\":false,\"variable_outputs\":false},{\"inputs\":{\"path\":\"path\",\"text\":\"text\"},\"name\":\"make_file\",\"outputs\":{\"result\":\"file\"},\"variable_inputs\":false,\"variable_outputs\":false},{\"inputs\":{\"_graph\":\"graph\",\"_input\":\"text\",\"_list\":\"list\"},\"name\":\"map\",\"outputs\":{},\"variable_inputs\":true,\"variable_outputs\":true},{\"inputs\":{\"text\":\"text\"},\"name\":\"parse_markdown\",\"outputs\":{\"result\":\"pandoc\"},\"variable_inputs\":false,\"variable_outputs\":false},{\"inputs\":{\"pandoc\":\"pandoc\"},\"name\":\"remap_link_extension\",\"outputs\":{\"result\":\"pandoc\"},\"variable_inputs\":false,\"variable_outputs\":false},{\"inputs\":{\"pandoc\":\"pandoc\"},\"name\":\"render_html5\",\"outputs\":{\"result\":\"text\"},\"variable_inputs\":false,\"variable_outputs\":false}]"
 graph_json = "{
     \"inputs\": [
         {
@@ -17,152 +17,145 @@ graph_json = "{
             \"type\": \"path\"
         }
     ],
-    \"nodes\": [
-        {
-            \"id\": \"read\",
-            \"function\": \"file_contents\",
-            \"parameters\": [
-                {
-                    \"name\": \"path\",
-                    \"source\": {
-                        \"type\": \"connection\",
-                        \"value\": \"in.path\"
-                    }
-                }
-            ]
-        },
-        {
-            \"id\": \"parse\",
-            \"function\": \"parse_markdown\",
-            \"parameters\": [
-                {
-                    \"name\": \"text\",
-                    \"source\": {
-                        \"type\": \"connection\",
-                        \"value\": \"read.result\"
-                    }
-                }
-            ]
-        },
-        {
-            \"id\": \"remap_links\",
-            \"function\": \"remap_link_extension\",
-            \"parameters\": [
-                {
-                    \"name\": \"pandoc\",
-                    \"source\": {
-                        \"type\": \"connection\",
-                        \"value\": \"parse.result\"
-                    }
-                },
-                {
-                    \"name\": \"from\",
-                    \"source\": {
-                        \"type\": \"constant\",
-                        \"value\": {
-                            \"type\": \"text\",
-                            \"value\": \".md\"
-                        }
-                    }
-                },
-                {
-                    \"name\": \"to\",
-                    \"source\": {
-                        \"type\": \"constant\",
-                        \"value\": {
-                            \"type\": \"text\",
-                            \"value\": \".html\"
-                        }
-                    }
-                }
-            ]
-        },
-        {
-            \"id\": \"render\",
-            \"function\": \"render_html5\",
-            \"parameters\": [
-                {
-                    \"name\": \"pandoc\",
-                    \"source\": {
-                        \"type\": \"connection\",
-                        \"value\": \"remap_links.result\"
-                    }
-                }
-            ]
-        },
-        {
-            \"id\": \"new_path\",
-            \"function\": \"change_extension\",
-            \"parameters\": [
-                {
-                    \"name\": \"extension\",
-                    \"source\": {
-                        \"type\": \"constant\",
-                        \"value\": {
-                            \"type\": \"text\",
-                            \"value\": \"html\"
-                        }
-                    }
-                },
-                {
-                    \"name\": \"path\",
-                    \"source\": {
-                        \"type\": \"connection\",
-                        \"value\": \"in.path\"
-                    }
-                }
-            ]
-        },
-        {
-            \"id\": \"output\",
-            \"function\": \"make_file\",
-            \"parameters\": [
-                {
-                    \"name\": \"path\",
-                    \"source\": {
-                        \"type\": \"connection\",
-                        \"value\": \"new_path.result\"
-                    }
-                },
-                {
-                    \"name\": \"text\",
-                    \"source\": {
-                        \"type\": \"connection\",
-                        \"value\": \"render.result\"
-                    }
-                }
-            ]
-        }
-    ],
     \"outputs\": [
         {
             \"name\": \"file\",
-            \"parameter\": {
-                \"name\": \"file\",
-                \"source\": {
-                    \"type\": \"connection\",
-                    \"value\": \"output.result\"
-                }
-            }
+            \"type\": \"file\"
         },
         {
             \"name\": \"path\",
-            \"parameter\": {
-                \"name\": \"path\",
-                \"source\": {
-                    \"type\": \"connection\",
-                    \"value\": \"new_path.result\"
+            \"type\": \"path\"
+        },
+        {
+            \"name\": \"text\",
+            \"type\": \"text\"
+        }
+    ],
+    \"nodes\": [
+        {
+            \"id\": \"read\",
+            \"function\": \"file_contents\"
+        },
+        {
+            \"id\": \"parse\",
+            \"function\": \"parse_markdown\"
+        },
+        {
+            \"id\": \"remap_links\",
+            \"function\": \"remap_link_extension\"
+        },
+        {
+            \"id\": \"render\",
+            \"function\": \"render_html5\"
+        },
+        {
+            \"id\": \"new_path\",
+            \"function\": \"change_extension\"
+        },
+        {
+            \"id\": \"output\",
+            \"function\": \"make_file\"
+        }
+    ],
+    \"parameters\": [
+        {
+            \"key\": \"read.path\",
+            \"source\": {
+                \"type\": \"connection\",
+                \"value\": \"in.path\"
+            }
+        },
+        {
+            \"key\": \"parse.text\",
+            \"source\": {
+                \"type\": \"connection\",
+                \"value\": \"read.result\"
+            }
+        },
+        {
+            \"key\": \"remap_links.pandoc\",
+            \"source\": {
+                \"type\": \"connection\",
+                \"value\": \"parse.result\"
+            }
+        },
+        {
+            \"key\": \"remap_links.from\",
+            \"source\": {
+                \"type\": \"constant\",
+                \"value\": {
+                    \"type\": \"text\",
+                    \"value\": \".md\"
                 }
             }
         },
         {
-            \"name\": \"text\",
-            \"parameter\": {
-                \"name\": \"text\",
-                \"source\": {
-                    \"type\": \"connection\",
-                    \"value\": \"render.result\"
+            \"key\": \"remap_links.to\",
+            \"source\": {
+                \"type\": \"constant\",
+                \"value\": {
+                    \"type\": \"text\",
+                    \"value\": \".html\"
                 }
+            }
+        },
+        {
+            \"key\": \"render.pandoc\",
+            \"source\": {
+                \"type\": \"connection\",
+                \"value\": \"remap_links.result\"
+            }
+        },
+        {
+            \"key\": \"new_path.extension\",
+            \"source\": {
+                \"type\": \"constant\",
+                \"value\": {
+                    \"type\": \"text\",
+                    \"value\": \"html\"
+                }
+            }
+        },
+        {
+            \"key\": \"new_path.path\",
+            \"source\": {
+                \"type\": \"connection\",
+                \"value\": \"in.path\"
+            }
+        },
+        {
+            \"key\": \"output.path\",
+            \"source\": {
+                \"type\": \"connection\",
+                \"value\": \"new_path.result\"
+            }
+        },
+        {
+            \"key\": \"output.text\",
+            \"source\": {
+                \"type\": \"connection\",
+                \"value\": \"render.result\"
+            }
+        },
+        {
+            \"key\": \"out.file\",
+            \"source\": {
+                \"type\": \"connection\",
+                \"value\": \"output.result\"
+            }
+        },
+        {
+            \"key\": \"out.path\",
+            \"source\": {
+                \"type\": \"connection\",
+                \"value\": \"new_path.result\"
+            }
+        },
+        {
+            \"key\": \"out.text\",
+            \"source\": {
+                \"type\": \"connection\",
+                \"value\": \"render.result\"
             }
         }
     ]

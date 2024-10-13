@@ -34,7 +34,6 @@ func _process(_delta: float) -> void:
 
 func setup():
 	title = function.function
-	name = function.function
 
 	for i in function.input_count:
 		add_slot(

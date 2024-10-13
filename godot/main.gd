@@ -25,39 +25,12 @@ func _ready() -> void:
 	input_function.variable_outputs = true
 
 	input_node = CATBOX_NODE.instantiate()
+	input_node.name = "in"
 	input_node.function = input_function
 	for input in graph.inputs:
 		input_node.add_slot(input.name, input.type, CatboxSlot.SlotType.OutputSlot)
 	add_child(input_node)
-
-	# Add nodes
-	for n in graph.nodes:
-		var node: CatboxNode = CATBOX_NODE.instantiate()
-		node.function = functions[n.function]
-		add_child(node)
-
-	# Add connections
-	for n in graph.nodes:
-		for param in n.parameters:
-			match param.source.type:
-				"connection":
-					var connection_info = param.source.value.split(".")
-					var from_node: StringName = ""
-					var from_port: int = -1
-					for o in graph.nodes:
-						if o.id == connection_info[0]:
-							from_node = o.function
-							from_port = functions[o.function].output_names.find(connection_info[1])
-					print(connection_info[0], " # ", from_node, " ", from_port, " ", n.function, " ", functions[n.function].input_names.find(param.name))
-					var err = connect_node(
-						from_node,
-						from_port,
-						n.function,
-						functions[n.function].input_names.find(param.name)
-					)
-					print("!! ", err)
-				"constant":
-					pass # TODO
+	nodes["in"] = input_node
 
 	# Special output node
 	var output_function := FunctionResource.new()
@@ -65,9 +38,57 @@ func _ready() -> void:
 	output_function.variable_inputs = true
 
 	output_node = CATBOX_NODE.instantiate()
+	output_node.name = "out"
 	output_node.function = output_function
-	# TODO: load outputs
+	for output in graph.outputs:
+		output_node.add_slot(output.name, output.type, CatboxSlot.SlotType.InputSlot)
 	add_child(output_node)
+	nodes["out"] = output_node
+
+	# Add nodes
+	for n in graph.nodes:
+		var node: CatboxNode = CATBOX_NODE.instantiate()
+		node.name = n.id
+		node.function = functions[n.function]
+		add_child(node)
+		nodes[n.id] = node
+
+	# Add parameters
+	for param in graph.parameters:
+		match param.source.type:
+			"connection":
+				var to = resolve_key(param.key, CatboxSlot.SlotType.InputSlot)
+				var from = resolve_key(param.source.value, CatboxSlot.SlotType.OutputSlot)
+				connect_node(
+					from.id,
+					from.port,
+					to.id,
+					to.port
+				)
+			"constant":
+				pass # TODO
+
+func resolve_key(key: String, type: CatboxSlot.SlotType) -> Dictionary:
+	var info = key.split(".")
+	var slots: Array[CatboxSlot] = nodes[info[0]].slots
+	var index = -1
+	for i in slots.size():
+		var slot = slots[i]
+		if slot.slot_name == info[1] and slot.slot_type == type:
+			index = i
+
+			var count = 0
+			if type == CatboxSlot.SlotType.OutputSlot:
+				for s in slots:
+					if s.slot_type == CatboxSlot.SlotType.InputSlot:
+						count += 1
+			index -= count
+			break
+
+	return {
+		"id": info[0],
+		"port": index,
+	}
 
 static func from_api_json(json: String) -> Array[FunctionResource]:
 	var data = JSON.parse_string(json)
@@ -85,6 +106,3 @@ static func from_api_json(json: String) -> Array[FunctionResource]:
 		function.variable_outputs = item.variable_outputs
 		results.push_back(function)
 	return results
-
-func _on_connection_request(from_node: StringName, from_port: int, to_node: StringName, to_port: int) -> void:
-	print(from_node, " ", from_port, " ", to_node, " ", to_port)
