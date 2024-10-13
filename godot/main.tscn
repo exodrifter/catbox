@@ -1,0 +1,172 @@
+[gd_scene load_steps=2 format=3 uid="uid://dbxirruhybaa6"]
+
+[ext_resource type="Script" path="res://main.gd" id="1_yl5ks"]
+
+[node name="Node2D" type="GraphEdit"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_yl5ks")
+api_json = "[{\"inputs\":{\"extension\":\"text\",\"path\":\"path\"},\"name\":\"change_extension\",\"outputs\":{\"result\":\"path\"},\"variable_inputs\":false,\"variable_outputs\":false},{\"inputs\":{\"object\":\"object\"},\"name\":\"deconstruct\",\"outputs\":{},\"variable_inputs\":false,\"variable_outputs\":true},{\"inputs\":{\"_graph\":\"graph\"},\"name\":\"exec_graph\",\"outputs\":{},\"variable_inputs\":true,\"variable_outputs\":true},{\"inputs\":{\"path\":\"path\"},\"name\":\"file_contents\",\"outputs\":{\"result\":\"text\"},\"variable_inputs\":false,\"variable_outputs\":false},{\"inputs\":{\"path\":\"path\"},\"name\":\"list_files\",\"outputs\":{\"result\":\"list\"},\"variable_inputs\":false,\"variable_outputs\":false},{\"inputs\":{\"path\":\"path\",\"text\":\"text\"},\"name\":\"make_file\",\"outputs\":{\"result\":\"file\"},\"variable_inputs\":false,\"variable_outputs\":false},{\"inputs\":{\"_graph\":\"graph\",\"_input\":\"text\",\"_list\":\"list\"},\"name\":\"map\",\"outputs\":{},\"variable_inputs\":true,\"variable_outputs\":true},{\"inputs\":{\"text\":\"text\"},\"name\":\"parse_markdown\",\"outputs\":{\"result\":\"pandoc\"},\"variable_inputs\":false,\"variable_outputs\":false},{\"inputs\":{\"pandoc\":\"pandoc\"},\"name\":\"remap_link_extension\",\"outputs\":{\"result\":\"pandoc\"},\"variable_inputs\":false,\"variable_outputs\":false},{\"inputs\":{\"pandoc\":\"pandoc\"},\"name\":\"render_html5\",\"outputs\":{\"results\":\"text\"},\"variable_inputs\":false,\"variable_outputs\":false}]"
+graph_json = "{
+    \"inputs\": [
+        {
+            \"name\": \"path\",
+            \"type\": \"path\"
+        }
+    ],
+    \"nodes\": [
+        {
+            \"id\": \"read\",
+            \"function\": \"file_contents\",
+            \"parameters\": [
+                {
+                    \"name\": \"path\",
+                    \"source\": {
+                        \"type\": \"connection\",
+                        \"value\": \"in.path\"
+                    }
+                }
+            ]
+        },
+        {
+            \"id\": \"parse\",
+            \"function\": \"parse_markdown\",
+            \"parameters\": [
+                {
+                    \"name\": \"text\",
+                    \"source\": {
+                        \"type\": \"connection\",
+                        \"value\": \"read.result\"
+                    }
+                }
+            ]
+        },
+        {
+            \"id\": \"remap_links\",
+            \"function\": \"remap_link_extension\",
+            \"parameters\": [
+                {
+                    \"name\": \"pandoc\",
+                    \"source\": {
+                        \"type\": \"connection\",
+                        \"value\": \"parse.result\"
+                    }
+                },
+                {
+                    \"name\": \"from\",
+                    \"source\": {
+                        \"type\": \"constant\",
+                        \"value\": {
+                            \"type\": \"text\",
+                            \"value\": \".md\"
+                        }
+                    }
+                },
+                {
+                    \"name\": \"to\",
+                    \"source\": {
+                        \"type\": \"constant\",
+                        \"value\": {
+                            \"type\": \"text\",
+                            \"value\": \".html\"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            \"id\": \"render\",
+            \"function\": \"render_html5\",
+            \"parameters\": [
+                {
+                    \"name\": \"pandoc\",
+                    \"source\": {
+                        \"type\": \"connection\",
+                        \"value\": \"remap_links.result\"
+                    }
+                }
+            ]
+        },
+        {
+            \"id\": \"new_path\",
+            \"function\": \"change_extension\",
+            \"parameters\": [
+                {
+                    \"name\": \"extension\",
+                    \"source\": {
+                        \"type\": \"constant\",
+                        \"value\": {
+                            \"type\": \"text\",
+                            \"value\": \"html\"
+                        }
+                    }
+                },
+                {
+                    \"name\": \"path\",
+                    \"source\": {
+                        \"type\": \"connection\",
+                        \"value\": \"in.path\"
+                    }
+                }
+            ]
+        },
+        {
+            \"id\": \"output\",
+            \"function\": \"make_file\",
+            \"parameters\": [
+                {
+                    \"name\": \"path\",
+                    \"source\": {
+                        \"type\": \"connection\",
+                        \"value\": \"new_path.result\"
+                    }
+                },
+                {
+                    \"name\": \"text\",
+                    \"source\": {
+                        \"type\": \"connection\",
+                        \"value\": \"render.result\"
+                    }
+                }
+            ]
+        }
+    ],
+    \"outputs\": [
+        {
+            \"name\": \"file\",
+            \"parameter\": {
+                \"name\": \"file\",
+                \"source\": {
+                    \"type\": \"connection\",
+                    \"value\": \"output.result\"
+                }
+            }
+        },
+        {
+            \"name\": \"path\",
+            \"parameter\": {
+                \"name\": \"path\",
+                \"source\": {
+                    \"type\": \"connection\",
+                    \"value\": \"new_path.result\"
+                }
+            }
+        },
+        {
+            \"name\": \"text\",
+            \"parameter\": {
+                \"name\": \"text\",
+                \"source\": {
+                    \"type\": \"connection\",
+                    \"value\": \"render.result\"
+                }
+            }
+        }
+    ]
+}
+"
+
+[connection signal="connection_request" from="." to="." method="_on_connection_request"]

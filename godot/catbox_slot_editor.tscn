@@ -1,0 +1,40 @@
+[gd_scene load_steps=2 format=3 uid="uid://ba33q13l30iab"]
+
+[ext_resource type="Script" path="res://catbox_slot_editor.gd" id="1_pbw5r"]
+
+[node name="CatboxSlotEditor" type="HBoxContainer"]
+script = ExtResource("1_pbw5r")
+
+[node name="LineEdit" type="LineEdit" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SlotTypeButton" type="OptionButton" parent="."]
+layout_mode = 2
+item_count = 2
+popup/item_0/text = "input"
+popup/item_1/text = "output"
+popup/item_1/id = 1
+
+[node name="ValueTypeButton" type="OptionButton" parent="."]
+layout_mode = 2
+item_count = 7
+popup/item_0/text = "file"
+popup/item_1/text = "graph"
+popup/item_1/id = 1
+popup/item_2/text = "list"
+popup/item_2/id = 2
+popup/item_3/text = "object"
+popup/item_3/id = 3
+popup/item_4/text = "pandoc"
+popup/item_4/id = 4
+popup/item_5/text = "path"
+popup/item_5/id = 5
+popup/item_6/text = "text"
+popup/item_6/id = 6
+
+[node name="Button" type="Button" parent="."]
+layout_mode = 2
+text = "Add"
+
+[connection signal="pressed" from="Button" to="." method="_on_button_pressed"]
