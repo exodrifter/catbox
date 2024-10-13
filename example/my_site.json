@@ -3,6 +3,12 @@
         "ssg": "ssg.json"
     },
     "inputs": [],
+    "outputs": [
+        {
+            "name": "result",
+            "type": "list"
+        }
+    ],
     "nodes": [
         {
             "id": "list_files",
@@ -65,6 +71,12 @@
                                 "type": "object"
                             }
                         ],
+                        "outputs": [
+                            {
+                                "name": "file",
+                                "type": "file"
+                            }
+                        ],
                         "nodes": [
                             {
                                 "id": "deconstruct",
@@ -78,17 +90,12 @@
                                     "type": "connection",
                                     "value": "in.object"
                                 }
-                            }
-                        ],
-                        "outputs": [
+                            },
                             {
-                                "name": "out.file",
-                                "parameter": {
-                                    "key": "out.file",
-                                    "source": {
-                                        "type": "connection",
-                                        "value": "deconstruct.file"
-                                    }
+                                "key": "out.file",
+                                "source": {
+                                    "type": "connection",
+                                    "value": "deconstruct.file"
                                 }
                             }
                         ]
@@ -112,17 +119,12 @@
                 "type": "connection",
                 "value": "site.result"
             }
-        }
-    ],
-    "outputs": [
+        },
         {
-            "name": "out.result",
-            "parameter": {
-                "key": "out.result",
-                "source": {
-                    "type": "connection",
-                    "value": "get_files.result"
-                }
+            "key": "out.result",
+            "source": {
+                "type": "connection",
+                "value": "get_files.result"
             }
         }
     ]

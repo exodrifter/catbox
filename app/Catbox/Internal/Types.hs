@@ -5,9 +5,8 @@ module Catbox.Internal.Types
 , Import(..)
 
 -- Parts of the graph
-, Input(inputName, inputType)
+, Signature(signatureName, signatureType)
 , Node(nodeId, nodeFunction)
-, Output(outputName, outputParameter)
 , Parameter(parameterKey, parameterSource)
 , ParameterSource(..)
 
@@ -29,9 +28,9 @@ import qualified Data.Text as T
 data RawGraph =
   RawGraph
     { rawGraphImports :: Map Text Import
-    , rawGraphInputs :: [Input]
+    , rawGraphInputs :: [Signature]
+    , rawGraphOutputs :: [Signature]
     , rawGraphNodes :: [Node]
-    , rawGraphOutputs :: [Output]
     , rawGraphParameters :: [Parameter]
     }
   deriving (Eq, Show)
@@ -41,8 +40,8 @@ instance Aeson.FromJSON RawGraph where
     RawGraph
       <$> v .:? "imports" .!= Map.empty
       <*> v .: "inputs"
-      <*> v .: "nodes"
       <*> v .: "outputs"
+      <*> v .: "nodes"
       <*> v .: "parameters"
 
 instance Aeson.ToJSON RawGraph where
@@ -50,8 +49,8 @@ instance Aeson.ToJSON RawGraph where
     Aeson.object
       [ "imports" .= rawGraphImports v
       , "inputs" .= rawGraphInputs v
-      , "nodes" .= rawGraphNodes v
       , "outputs" .= rawGraphOutputs v
+      , "nodes" .= rawGraphNodes v
       , "parameters" .= rawGraphParameters v
       ]
 
@@ -80,9 +79,9 @@ instance Aeson.ToJSON Import where
 data Graph =
   Graph
     { graphImports :: Map Text Graph
-    , graphInputs :: [Input]
+    , graphInputs :: [Signature]
+    , graphOutputs :: [Signature]
     , graphNodes :: [Node]
-    , graphOutputs :: [Output]
     , graphParameters :: [Parameter]
     }
   deriving (Eq, Show)
@@ -92,8 +91,8 @@ instance Aeson.FromJSON Graph where
     Graph
       <$> v .:? "imports" .!= Map.empty
       <*> v .: "inputs"
-      <*> v .: "nodes"
       <*> v .: "outputs"
+      <*> v .: "nodes"
       <*> v .: "parameters"
 
 instance Aeson.ToJSON Graph where
@@ -101,8 +100,8 @@ instance Aeson.ToJSON Graph where
     Aeson.object
       [ "imports" .= graphImports v
       , "inputs" .= graphInputs v
-      , "nodes" .= graphNodes v
       , "outputs" .= graphOutputs v
+      , "nodes" .= graphNodes v
       , "parameters" .= graphParameters v
       ]
 
@@ -110,24 +109,24 @@ instance Aeson.ToJSON Graph where
 -- Graph Parts
 -------------------------------------------------------------------------------
 
-data Input =
-  Input
-    { inputName :: Text
-    , inputType :: Text
+data Signature =
+  Signature
+    { signatureName :: Text
+    , signatureType :: Text
     }
   deriving (Eq, Show)
 
-instance Aeson.FromJSON Input where
-  parseJSON = Aeson.withObject "Input" $ \v -> do
-    Input
+instance Aeson.FromJSON Signature where
+  parseJSON = Aeson.withObject "Signature" $ \v -> do
+    Signature
       <$> v .: "name"
       <*> v .: "type"
 
-instance Aeson.ToJSON Input where
+instance Aeson.ToJSON Signature where
   toJSON v =
     Aeson.object
-      [ "name" .= inputName v
-      , "type" .= inputType v
+      [ "name" .= signatureName v
+      , "type" .= signatureType v
       ]
 
 data Node =
@@ -196,26 +195,6 @@ instance Aeson.ToJSON ParameterSource where
           [ "type" .= ("constant" :: Text)
           , "value" .= a
           ]
-
-data Output =
-  Output
-    { outputName :: Text
-    , outputParameter :: Parameter
-    }
-  deriving (Eq, Show)
-
-instance Aeson.FromJSON Output where
-  parseJSON = Aeson.withObject "Output" $ \v -> do
-    Output
-      <$> v .: "name"
-      <*> v .: "parameter"
-
-instance Aeson.ToJSON Output where
-  toJSON v =
-    Aeson.object
-      [ "name" .= outputName v
-      , "parameter" .= outputParameter v
-      ]
 
 -------------------------------------------------------------------------------
 -- Graph Primitive Types

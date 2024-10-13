@@ -5,6 +5,20 @@
             "type": "path"
         }
     ],
+    "outputs": [
+        {
+            "name": "file",
+            "type": "file"
+        },
+        {
+            "name": "path",
+            "type": "path"
+        },
+        {
+            "name": "text",
+            "type": "text"
+        }
+    ],
     "nodes": [
         {
             "id": "read",
@@ -110,37 +124,26 @@
                 "type": "connection",
                 "value": "render.result"
             }
-        }
-    ],
-    "outputs": [
+        },
         {
-            "name": "file",
-            "parameter": {
-                "key": "out.file",
-                "source": {
-                    "type": "connection",
-                    "value": "output.result"
-                }
+            "key": "out.file",
+            "source": {
+                "type": "connection",
+                "value": "output.result"
             }
         },
         {
-            "name": "path",
-            "parameter": {
-                "key": "out.path",
-                "source": {
-                    "type": "connection",
-                    "value": "new_path.result"
-                }
+            "key": "out.path",
+            "source": {
+                "type": "connection",
+                "value": "new_path.result"
             }
         },
         {
-            "name": "text",
-            "parameter": {
-                "key": "out.text",
-                "source": {
-                    "type": "connection",
-                    "value": "render.result"
-                }
+            "key": "out.text",
+            "source": {
+                "type": "connection",
+                "value": "render.result"
             }
         }
     ]

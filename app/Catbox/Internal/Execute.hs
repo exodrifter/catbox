@@ -28,16 +28,23 @@ processGraph graph initialState = do
     (Left errs, _) -> Left errs
     (Right (), finalState) ->
       -- Filter the final state for the outputs
-      extractResults finalState (graphOutputs graph)
+      extractResults finalState (graphOutputs graph) (graphParameters graph)
 
 -- Write results to disk and buffer only if all outputs are available.
-extractResults :: CatboxState -> [Output] -> Either Text (Map Text Value)
-extractResults s outputs = do
+extractResults :: CatboxState -> [Signature] -> [Parameter] -> Either Text (Map Text Value)
+extractResults s outputs params = do
   let
-    loadResult :: Output -> Either Text (Text, Value)
-    loadResult output =
-      (\(_, v) -> (outputName output, v)) <$>
-        evalCatbox (resolveParameter (outputParameter output)) s
+    loadResult :: Signature -> Either Text (Text, Value)
+    loadResult output = do
+      let
+        outputKey = "out" <> keyFromText (signatureName output)
+      param <-
+        case filter (\p -> parameterKey p == outputKey) params of
+          [p] -> Right p
+          [] -> Left ("Cannot find parameter \"" <> keyToText outputKey <> "\"")
+          _ -> Left ("Multiple parameters for \"" <> keyToText outputKey <> "\"")
+      (_, v) <- evalCatbox (resolveParameter param) s
+      pure (signatureName output, v)
 
   case partitionEithers (loadResult <$> outputs) of
     -- All of the results are available
