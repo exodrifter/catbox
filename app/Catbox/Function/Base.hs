@@ -27,5 +27,5 @@ deconstructFunction =
   where
     functionExec params key = do
       object <- objectParam "object" params
-      let writeKeys (k, v) = insertKey (key <> keyFromText k) v
+      let writeKeys (k, v) = insertKey (keyFromText key <> keyFromText k) v
       traverse_ writeKeys (Map.toList (objectFields object))

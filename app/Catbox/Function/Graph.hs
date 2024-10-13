@@ -44,7 +44,7 @@ execGraphFunction =
         Right finalState -> do
           let
             loadResult (name, v) =
-              insertKey (key <> keyFromText name) v
+              insertKey (keyFromText key <> keyFromText name) v
           traverse_ loadResult (Map.toList finalState)
 
 mapFunction :: Function
@@ -79,7 +79,7 @@ mapFunction =
         )
         list
 
-      insertKey (key <> "result") (CList (catMaybes results))
+      insertKey (keyFromText key <> "result") (CList (catMaybes results))
 
     getResults :: Graph -> CatboxState -> Catbox Text (Maybe Value)
     getResults graph s =

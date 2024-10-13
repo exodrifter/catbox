@@ -10,7 +10,7 @@ import qualified Data.Text as T
 processGraph :: Graph -> CatboxState -> Either Text (Map Text Value)
 processGraph graph initialState = do
   let
-    catbox = processNodes (graphNodes graph)
+    catbox = processNodes graph (graphNodes graph)
     importedState =
       foldl'
         ( \s (name, value) ->
@@ -48,12 +48,12 @@ extractResults s outputs = do
 
 -- Tries to process the output of all nodes in the graph. Returns an error if
 -- it fails to do so.
-processNodes :: [Node] -> Catbox Text ()
-processNodes nodes = do
+processNodes :: Graph -> [Node] -> Catbox Text ()
+processNodes graph nodes = do
   let
     tryExec :: [(Node, Text)] -> Node -> Catbox Text [(Node, Text)]
     tryExec failed node = do
-      result <- tryError (processNode node)
+      result <- tryError (processNode graph node)
       case result of
         Left err -> pure ((node, err):failed)
         Right () -> pure failed
@@ -71,14 +71,14 @@ processNodes nodes = do
 
       -- Some succeeded, try again
       | otherwise ->
-        processNodes (fst <$> failed)
+        processNodes graph (fst <$> failed)
 
-processNode :: Node -> Catbox Text ()
-processNode node = do
-  args <- resolveParameters (nodeParameters node)
+processNode :: Graph -> Node -> Catbox Text ()
+processNode graph node = do
+  args <- resolveParameters (nodeId node) (graphParameters graph)
   invoke (nodeFunction node) args (nodeId node)
 
-invoke :: Text -> Map Text Value -> Key -> Catbox Text ()
+invoke :: Text -> Map Text Value -> Text -> Catbox Text ()
 invoke name params key = do
   fn <- getFunction name
   functionExec fn params key

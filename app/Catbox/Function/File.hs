@@ -32,7 +32,7 @@ fileContentsFunction =
       path <- pathParam "path" params
       contents <- getFileContents path
       insertKey
-        (key <> "result")
+        (keyFromText key <> "result")
         (CText contents)
 
 makeFileFunction :: Function
@@ -55,5 +55,5 @@ makeFileFunction =
       path <- pathParam "path" params
       text <- textParam "text" params
       insertKey
-        (key <> "result")
+        (keyFromText key <> "result")
         (CFile (File path text))

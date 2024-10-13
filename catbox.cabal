@@ -33,7 +33,6 @@ executable catbox
     ghc-options:
       -Wall
       -Wcompat
-      -Werror
 
     default-extensions:
       BlockArguments,

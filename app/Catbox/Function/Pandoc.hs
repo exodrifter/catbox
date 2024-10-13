@@ -53,7 +53,7 @@ parseMarkdownFunction =
     functionExec params key = do
       text <- textParam "text" params
       pandoc <- runPandocPure (Pandoc.readMarkdown Pandoc.def text)
-      insertKey (key <> "result") (CPandoc pandoc)
+      insertKey (keyFromText key <> "result") (CPandoc pandoc)
 
 renderHtml5Function :: Function
 renderHtml5Function =
@@ -74,7 +74,7 @@ renderHtml5Function =
       pandoc <- pandocParam "pandoc" params
       html <- runPandocPure (Pandoc.writeHtml5 Pandoc.def pandoc)
       let text = TL.toStrict (Blaze.renderHtml html)
-      insertKey (key <> "result") (CText text)
+      insertKey (keyFromText key <> "result") (CText text)
 
 --------------------------------------------------------------------------------
 -- Transformation
@@ -100,7 +100,7 @@ remapLinkExtension =
       from <- textParam "from" params
       to <- textParam "to" params
       insertKey
-        (key <> "result")
+        (keyFromText key <> "result")
         (CPandoc (remapTarget (first (T.replace from to)) pandoc))
 
 remapTarget :: (Pandoc.Target -> Pandoc.Target) -> Pandoc -> Pandoc

@@ -6,14 +6,14 @@ module Catbox.Internal.Types
 
 -- Parts of the graph
 , Input(inputName, inputType)
-, Node(nodeId, nodeFunction, nodeParameters)
+, Node(nodeId, nodeFunction)
 , Output(outputName, outputParameter)
-, Parameter(parameterName, parameterSource)
+, Parameter(parameterKey, parameterSource)
 , ParameterSource(..)
 
 -- Primitive types used by the graph
 , Results
-, Key, keyFromText, keyToText
+, Key, keyIdPart, keyFieldPart, keyFromText, keyToText
 , Value(..)
 , ValueType(..)
 , File(..)
@@ -32,6 +32,7 @@ data RawGraph =
     , rawGraphInputs :: [Input]
     , rawGraphNodes :: [Node]
     , rawGraphOutputs :: [Output]
+    , rawGraphParameters :: [Parameter]
     }
   deriving (Eq, Show)
 
@@ -42,6 +43,7 @@ instance Aeson.FromJSON RawGraph where
       <*> v .: "inputs"
       <*> v .: "nodes"
       <*> v .: "outputs"
+      <*> v .: "parameters"
 
 instance Aeson.ToJSON RawGraph where
   toJSON v =
@@ -50,6 +52,7 @@ instance Aeson.ToJSON RawGraph where
       , "inputs" .= rawGraphInputs v
       , "nodes" .= rawGraphNodes v
       , "outputs" .= rawGraphOutputs v
+      , "parameters" .= rawGraphParameters v
       ]
 
 newtype Import = Import (Either FilePath RawGraph)
@@ -80,6 +83,7 @@ data Graph =
     , graphInputs :: [Input]
     , graphNodes :: [Node]
     , graphOutputs :: [Output]
+    , graphParameters :: [Parameter]
     }
   deriving (Eq, Show)
 
@@ -90,6 +94,7 @@ instance Aeson.FromJSON Graph where
       <*> v .: "inputs"
       <*> v .: "nodes"
       <*> v .: "outputs"
+      <*> v .: "parameters"
 
 instance Aeson.ToJSON Graph where
   toJSON v =
@@ -98,6 +103,7 @@ instance Aeson.ToJSON Graph where
       , "inputs" .= graphInputs v
       , "nodes" .= graphNodes v
       , "outputs" .= graphOutputs v
+      , "parameters" .= graphParameters v
       ]
 
 -------------------------------------------------------------------------------
@@ -126,9 +132,8 @@ instance Aeson.ToJSON Input where
 
 data Node =
   Node
-    { nodeId :: Key
+    { nodeId :: Text
     , nodeFunction :: Text
-    , nodeParameters :: [Parameter]
     }
   deriving (Eq, Show)
 
@@ -137,19 +142,17 @@ instance Aeson.FromJSON Node where
     Node
       <$> v .: "id"
       <*> v .: "function"
-      <*> v .: "parameters"
 
 instance Aeson.ToJSON Node where
   toJSON v =
     Aeson.object
       [ "id" .= nodeId v
       , "function" .= nodeFunction v
-      , "parameters" .= nodeParameters v
       ]
 
 data Parameter =
   Parameter
-    { parameterName :: Text
+    { parameterKey :: Key
     , parameterSource :: ParameterSource
     }
   deriving (Eq, Show)
@@ -157,13 +160,13 @@ data Parameter =
 instance Aeson.FromJSON Parameter where
   parseJSON = Aeson.withObject "Parameter" $ \v -> do
     Parameter
-      <$> v .: "name"
+      <$> v .: "key"
       <*> v .: "source"
 
 instance Aeson.ToJSON Parameter where
   toJSON v =
     Aeson.object
-      [ "name" .= parameterName v
+      [ "key" .= parameterKey v
       , "source" .= parameterSource v
       ]
 
@@ -233,6 +236,18 @@ instance Aeson.FromJSON Key where
 
 instance Aeson.ToJSON Key where
   toJSON = Aeson.String . keyToText
+
+keyIdPart :: Key -> Maybe Text
+keyIdPart (Key parts) =
+  case parts of
+    x:_ -> Just x
+    _ -> Nothing
+
+keyFieldPart :: Key -> Maybe Text
+keyFieldPart (Key parts) =
+  case parts of
+    _:x:[] -> Just x
+    _ -> Nothing
 
 keyFromText :: Text -> Key
 keyFromText = Key . T.split (== '.')

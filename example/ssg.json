@@ -8,125 +8,115 @@
     "nodes": [
         {
             "id": "read",
-            "function": "file_contents",
-            "parameters": [
-                {
-                    "name": "path",
-                    "source": {
-                        "type": "connection",
-                        "value": "in.path"
-                    }
-                }
-            ]
+            "function": "file_contents"
         },
         {
             "id": "parse",
-            "function": "parse_markdown",
-            "parameters": [
-                {
-                    "name": "text",
-                    "source": {
-                        "type": "connection",
-                        "value": "read.result"
-                    }
-                }
-            ]
+            "function": "parse_markdown"
         },
         {
             "id": "remap_links",
-            "function": "remap_link_extension",
-            "parameters": [
-                {
-                    "name": "pandoc",
-                    "source": {
-                        "type": "connection",
-                        "value": "parse.result"
-                    }
-                },
-                {
-                    "name": "from",
-                    "source": {
-                        "type": "constant",
-                        "value": {
-                            "type": "text",
-                            "value": ".md"
-                        }
-                    }
-                },
-                {
-                    "name": "to",
-                    "source": {
-                        "type": "constant",
-                        "value": {
-                            "type": "text",
-                            "value": ".html"
-                        }
-                    }
-                }
-            ]
+            "function": "remap_link_extension"
         },
         {
             "id": "render",
-            "function": "render_html5",
-            "parameters": [
-                {
-                    "name": "pandoc",
-                    "source": {
-                        "type": "connection",
-                        "value": "remap_links.result"
-                    }
-                }
-            ]
+            "function": "render_html5"
         },
         {
             "id": "new_path",
-            "function": "change_extension",
-            "parameters": [
-                {
-                    "name": "extension",
-                    "source": {
-                        "type": "constant",
-                        "value": {
-                            "type": "text",
-                            "value": "html"
-                        }
-                    }
-                },
-                {
-                    "name": "path",
-                    "source": {
-                        "type": "connection",
-                        "value": "in.path"
-                    }
-                }
-            ]
+            "function": "change_extension"
         },
         {
             "id": "output",
-            "function": "make_file",
-            "parameters": [
-                {
-                    "name": "path",
-                    "source": {
-                        "type": "connection",
-                        "value": "new_path.result"
-                    }
-                },
-                {
-                    "name": "text",
-                    "source": {
-                        "type": "connection",
-                        "value": "render.result"
-                    }
+            "function": "make_file"
+        }
+    ],
+    "parameters": [
+        {
+            "key": "read.path",
+            "source": {
+                "type": "connection",
+                "value": "in.path"
+            }
+        },
+        {
+            "key": "parse.text",
+            "source": {
+                "type": "connection",
+                "value": "read.result"
+            }
+        },
+        {
+            "key": "remap_links.pandoc",
+            "source": {
+                "type": "connection",
+                "value": "parse.result"
+            }
+        },
+        {
+            "key": "remap_links.from",
+            "source": {
+                "type": "constant",
+                "value": {
+                    "type": "text",
+                    "value": ".md"
                 }
-            ]
+            }
+        },
+        {
+            "key": "remap_links.to",
+            "source": {
+                "type": "constant",
+                "value": {
+                    "type": "text",
+                    "value": ".html"
+                }
+            }
+        },
+        {
+            "key": "render.pandoc",
+            "source": {
+                "type": "connection",
+                "value": "remap_links.result"
+            }
+        },
+        {
+            "key": "new_path.extension",
+            "source": {
+                "type": "constant",
+                "value": {
+                    "type": "text",
+                    "value": "html"
+                }
+            }
+        },
+        {
+            "key": "new_path.path",
+            "source": {
+                "type": "connection",
+                "value": "in.path"
+            }
+        },
+        {
+            "key": "output.path",
+            "source": {
+                "type": "connection",
+                "value": "new_path.result"
+            }
+        },
+        {
+            "key": "output.text",
+            "source": {
+                "type": "connection",
+                "value": "render.result"
+            }
         }
     ],
     "outputs": [
         {
             "name": "file",
             "parameter": {
-                "name": "file",
+                "key": "out.file",
                 "source": {
                     "type": "connection",
                     "value": "output.result"
@@ -136,7 +126,7 @@
         {
             "name": "path",
             "parameter": {
-                "name": "path",
+                "key": "out.path",
                 "source": {
                     "type": "connection",
                     "value": "new_path.result"
@@ -146,7 +136,7 @@
         {
             "name": "text",
             "parameter": {
-                "name": "text",
+                "key": "out.text",
                 "source": {
                     "type": "connection",
                     "value": "render.result"

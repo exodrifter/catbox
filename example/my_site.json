@@ -6,123 +6,119 @@
     "nodes": [
         {
             "id": "list_files",
-            "function": "list_files",
-            "parameters": [
-                {
-                    "name": "path",
-                    "source": {
-                        "type": "constant",
-                        "value": {
-                            "type": "path",
-                            "value": ""
-                        }
-                    }
-                }
-            ]
+            "function": "list_files"
         },
         {
             "id": "site",
-            "function": "map",
-            "parameters": [
-                {
-                    "name": "_graph",
-                    "source": {
-                        "type": "connection",
-                        "value": "import.ssg"
-                    }
-                },
-                {
-                    "name": "_input",
-                    "source": {
-                        "type": "constant",
-                        "value": {
-                            "type": "text",
-                            "value": "path"
-                        }
-                    }
-                },
-                {
-                    "name": "_list",
-                    "source": {
-                        "type": "connection",
-                        "value": "list_files.result"
-                    }
-                }
-            ]
+            "function": "map"
         },
         {
             "id": "get_files",
-            "function": "map",
-            "parameters": [
-                {
-                    "name": "_graph",
-                    "source": {
-                        "type": "constant",
-                        "value": {
-                            "type": "graph",
-                            "value": {
-                                "inputs": [
-                                    {
-                                        "name": "object",
-                                        "type": "object"
-                                    }
-                                ],
-                                "nodes": [
-                                    {
-                                        "id": "deconstruct",
-                                        "function": "deconstruct",
-                                        "parameters": [
-                                            {
-                                                "name": "object",
-                                                "source": {
-                                                    "type": "connection",
-                                                    "value": "in.object"
-                                                }
-                                            }
-                                        ]
-                                    }
-                                ],
-                                "outputs": [
-                                    {
-                                        "name": "file",
-                                        "parameter": {
-                                            "name": "file",
-                                            "source": {
-                                                "type": "connection",
-                                                "value": "deconstruct.file"
-                                            }
-                                        }
-                                    }
-                                ]
+            "function": "map"
+        }
+    ],
+    "parameters": [
+        {
+            "key": "list_files.path",
+            "source": {
+                "type": "constant",
+                "value": {
+                    "type": "path",
+                    "value": ""
+                }
+            }
+        },
+        {
+            "key": "site._graph",
+            "source": {
+                "type": "connection",
+                "value": "import.ssg"
+            }
+        },
+        {
+            "key": "site._input",
+            "source": {
+                "type": "constant",
+                "value": {
+                    "type": "text",
+                    "value": "path"
+                }
+            }
+        },
+        {
+            "key": "site._list",
+            "source": {
+                "type": "connection",
+                "value": "list_files.result"
+            }
+        },
+        {
+            "key": "get_files._graph",
+            "source": {
+                "type": "constant",
+                "value": {
+                    "type": "graph",
+                    "value": {
+                        "inputs": [
+                            {
+                                "name": "object",
+                                "type": "object"
                             }
-                        }
-                    }
-                },
-                {
-                    "name": "_input",
-                    "source": {
-                        "type": "constant",
-                        "value": {
-                            "type": "text",
-                            "value": "object"
-                        }
-                    }
-                },
-                {
-                    "name": "_list",
-                    "source": {
-                        "type": "connection",
-                        "value": "site.result"
+                        ],
+                        "nodes": [
+                            {
+                                "id": "deconstruct",
+                                "function": "deconstruct"
+                            }
+                        ],
+                        "parameters": [
+                            {
+                                "key": "deconstruct.object",
+                                "source": {
+                                    "type": "connection",
+                                    "value": "in.object"
+                                }
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "name": "out.file",
+                                "parameter": {
+                                    "key": "out.file",
+                                    "source": {
+                                        "type": "connection",
+                                        "value": "deconstruct.file"
+                                    }
+                                }
+                            }
+                        ]
                     }
                 }
-            ]
+            }
+        },
+        {
+            "key": "get_files._input",
+            "source": {
+                "type": "constant",
+                "value": {
+                    "type": "text",
+                    "value": "object"
+                }
+            }
+        },
+        {
+            "key": "get_files._list",
+            "source": {
+                "type": "connection",
+                "value": "site.result"
+            }
         }
     ],
     "outputs": [
         {
-            "name": "result",
+            "name": "out.result",
             "parameter": {
-                "name": "result",
+                "key": "out.result",
                 "source": {
                     "type": "connection",
                     "value": "get_files.result"

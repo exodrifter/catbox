@@ -98,7 +98,7 @@ data Function =
     , functionOutputs :: Map Text ValueType
     , functionVariableInputs :: Bool
     , functionVariableOutputs :: Bool
-    , functionExec :: Map Text Value -> Key -> Catbox Text ()
+    , functionExec :: Map Text Value -> Text -> Catbox Text ()
     }
 
 getFunction :: Text -> Catbox Text Function
@@ -169,20 +169,30 @@ insertKey key value = do
   s <- get
   put s { catboxResults = Map.insert key value (catboxResults s) }
 
-resolveParameters :: [Parameter] -> Catbox Text (Map Text Value)
-resolveParameters parameters = do
-  results <- traverse resolveParameter parameters
+resolveParameters :: Text -> [Parameter] -> Catbox Text (Map Text Value)
+resolveParameters nodeId parameters = do
+  let
+    nodeParameters =
+      filter (\p -> keyIdPart (parameterKey p) == Just nodeId) parameters
+  results <- traverse resolveParameter nodeParameters
   pure (Map.fromList results)
 
 resolveParameter :: Parameter -> Catbox Text (Text, Value)
 resolveParameter parameter = do
+  field <-
+    case keyFieldPart (parameterKey parameter) of
+      Just f ->
+        pure f
+      Nothing ->
+        throwError ("Cannot find field for parameter \"" <> keyToText (parameterKey parameter) <> "\"")
+
   case parameterSource parameter of
     Constant c ->
-      pure (parameterName parameter, c)
+      pure (field, c)
     Connection key -> do
       results <- gets catboxResults
       case Map.lookup key results of
         Nothing ->
           throwError ("Cannot find key \"" <> keyToText key <> "\"")
         Just value ->
-          pure (parameterName parameter, value)
+          pure (field, value)

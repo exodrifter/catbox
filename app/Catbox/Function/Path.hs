@@ -34,5 +34,5 @@ changeExtensionFunction =
       extension <- textParam "extension" params
       path <- pathParam "path" params
       insertKey
-        (key <> "result")
+        (keyFromText key <> "result")
         (CPath (FilePath.replaceExtension path (T.unpack extension)))

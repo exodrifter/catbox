@@ -128,6 +128,7 @@ resolveRawGraph path rawGraph = do
           , graphInputs = rawGraphInputs rawGraph
           , graphNodes = rawGraphNodes rawGraph
           , graphOutputs = rawGraphOutputs rawGraph
+          , graphParameters = rawGraphParameters rawGraph
           }
         )
     (errs, _) ->
