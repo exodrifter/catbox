@@ -12,6 +12,8 @@ enum SlotType { InputSlot, OutputSlot }
 @onready var line_edit: LineEdit = $LineEdit
 @onready var no_editor_label: RichTextLabel = $NoEditorLabel
 
+var value: Variant
+
 func _ready() -> void:
 	name = slot_name
 
@@ -40,10 +42,14 @@ func _disable_editors() -> void:
 func _set_editor(type: String) -> void:
 	match type:
 		"text":
+			if value is String:
+				line_edit.text = value
 			line_edit.visible = true
 			no_editor_label.visible = false
 
 		"path":
+			if value is String:
+				line_edit.text = value
 			line_edit.visible = true
 			no_editor_label.visible = false
 

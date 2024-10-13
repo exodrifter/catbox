@@ -66,7 +66,11 @@ func _ready() -> void:
 					to.port
 				)
 			"constant":
-				pass # TODO
+				var info = param.key.split(".")
+				for slot in nodes[info[0]].slots:
+					if slot.slot_type == CatboxSlot.SlotType.InputSlot and slot.slot_name == info[1]:
+						slot.value = param.source.value.value
+						break
 
 func resolve_key(key: String, type: CatboxSlot.SlotType) -> Dictionary:
 	var info = key.split(".")
