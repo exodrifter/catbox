@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3 uid="uid://dkeuavrwa1dik"]
 
 [ext_resource type="Script" path="res://catbox_node.gd" id="1_m3ni4"]
-[ext_resource type="Script" path="res://function_resource.gd" id="2_mpry0"]
+[ext_resource type="Script" path="res://catbox/function.gd" id="2_mpry0"]
 [ext_resource type="PackedScene" uid="uid://ba33q13l30iab" path="res://catbox_slot_editor.tscn" id="3_jws0e"]
 
 [sub_resource type="Resource" id="Resource_qjvkq"]

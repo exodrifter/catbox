@@ -5,7 +5,7 @@ module Catbox.Internal.Types
 , Import(..)
 
 -- Parts of the graph
-, Signature(signatureName, signatureType)
+, Signature(..)
 , Node(nodeId, nodeFunction)
 , Parameter(parameterKey, parameterSource)
 , ParameterSource(..)
@@ -112,7 +112,7 @@ instance Aeson.ToJSON Graph where
 data Signature =
   Signature
     { signatureName :: Text
-    , signatureType :: Text
+    , signatureType :: ValueType
     }
   deriving (Eq, Show)
 
@@ -304,6 +304,7 @@ data ValueType =
   | TPandoc
   | TPath
   | TText
+  deriving (Eq, Show)
 
 instance Aeson.FromJSON ValueType where
   parseJSON = Aeson.withText "Value" $ \typ -> do

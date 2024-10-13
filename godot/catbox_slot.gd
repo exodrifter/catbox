@@ -3,7 +3,7 @@ extends HBoxContainer
 
 enum SlotType { InputSlot, OutputSlot }
 
-@export var catbox_node: CatboxNode
+@export var catbox_node: CatboxGraphNode
 @export var slot_name: String
 @export var slot_type: SlotType
 @export var value_type: String
@@ -18,18 +18,24 @@ func _ready() -> void:
 	name = slot_name
 
 func _process(_delta: float) -> void:
-	var is_variable := false
+	var is_variable := true
 	match slot_type:
 		SlotType.InputSlot:
 			label.text = slot_name
 			_set_editor(value_type)
 			if is_instance_valid(catbox_node):
-				is_variable = catbox_node.function.input_names.find(slot_name) == -1
+				for input in catbox_node.function.inputs:
+					if input.name == slot_name:
+						is_variable = false
+						break
 		SlotType.OutputSlot:
 			label.text = "[right]%s[/right]" % slot_name
 			_disable_editors()
 			if is_instance_valid(catbox_node):
-				is_variable = catbox_node.function.input_names.find(slot_name) == -1
+				for output in catbox_node.function.outputs:
+					if output.name == slot_name:
+						is_variable = false
+						break
 
 	# Set variable style
 	if is_variable:

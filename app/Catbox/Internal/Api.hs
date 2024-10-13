@@ -9,12 +9,13 @@ import Catbox.Internal.Types
 
 import Data.Aeson ((.:), (.=))
 import qualified Data.Aeson.Types as Aeson
+import qualified Data.Map as Map
 
 data FunctionApi =
   FunctionApi
     { functionApiName :: Text
-    , functionApiInputs :: Map Text ValueType
-    , functionApiOutputs :: Map Text ValueType
+    , functionApiInputs :: [Signature]
+    , functionApiOutputs :: [Signature]
     , functionApiVariableInputs :: Bool
     , functionApiVariableOutputs :: Bool
     }
@@ -45,8 +46,11 @@ extractFunctionApi :: Function -> FunctionApi
 extractFunctionApi Function {..} =
   FunctionApi
     { functionApiName = functionName
-    , functionApiInputs = functionInputs
-    , functionApiOutputs = functionOutputs
+    , functionApiInputs = toSignatures functionInputs
+    , functionApiOutputs = toSignatures functionOutputs
     , functionApiVariableInputs = functionVariableInputs
     , functionApiVariableOutputs = functionVariableOutputs
     }
+  where
+    toSignatures = fmap toSignature . Map.toList
+    toSignature (signatureName, signatureType) = Signature {..}

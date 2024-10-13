@@ -1,10 +1,10 @@
 ## Responsible for representing a node in a function graph
-class_name CatboxNode
+class_name CatboxGraphNode
 extends GraphNode
 
 const SLOT = preload("res://catbox_slot.tscn")
 
-@export var function: FunctionResource
+var function: CatboxFunction
 
 var slots: Array[CatboxSlot]
 
@@ -33,19 +33,19 @@ func _process(_delta: float) -> void:
 	reset_size()
 
 func setup():
-	title = function.function
+	title = function.function_name
 
-	for i in function.input_count:
+	for input in function.inputs:
 		add_slot(
-			function.input_names[i],
-			function.input_types[i],
+			input.name,
+			input.type,
 			CatboxSlot.SlotType.InputSlot
 		)
 
-	for i in function.output_count:
+	for output in function.outputs:
 		add_slot(
-			function.output_names[i],
-			function.output_types[i],
+			output.name,
+			output.type,
 			CatboxSlot.SlotType.OutputSlot
 		)
 
