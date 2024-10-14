@@ -11,18 +11,22 @@ enum SlotType { InputSlot, OutputSlot }
 @onready var label: RichTextLabel = $Label
 @onready var line_edit: LineEdit = $LineEdit
 @onready var no_editor_label: RichTextLabel = $NoEditorLabel
+@onready var spacer: Control = $Spacer
 
+var hide_editor: bool = false:
+	set(value):
+		hide_editor = value
+		_refresh_editor()
 var value: Variant
 
 func _ready() -> void:
 	name = slot_name
+	_refresh_editor()
 
-func _process(_delta: float) -> void:
 	var is_variable := true
 	match slot_type:
 		SlotType.InputSlot:
 			label.text = slot_name
-			_set_editor(value_type)
 			if is_instance_valid(catbox_node):
 				for input in catbox_node.function.inputs:
 					if input.name == slot_name:
@@ -30,7 +34,6 @@ func _process(_delta: float) -> void:
 						break
 		SlotType.OutputSlot:
 			label.text = "[right]%s[/right]" % slot_name
-			_disable_editors()
 			if is_instance_valid(catbox_node):
 				for output in catbox_node.function.outputs:
 					if output.name == slot_name:
@@ -41,26 +44,32 @@ func _process(_delta: float) -> void:
 	if is_variable:
 		label.add_theme_color_override("default_color", Color.GRAY)
 
-func _disable_editors() -> void:
-	line_edit.visible = false
-	no_editor_label.visible = false
+func _refresh_editor() -> void:
+	if not is_node_ready():
+		return
 
-func _set_editor(type: String) -> void:
-	match type:
+	var show_editor := not hide_editor and slot_type == SlotType.InputSlot
+	var show_spacer := hide_editor and slot_type == SlotType.InputSlot
+	match value_type:
 		"text":
+			spacer.visible = show_spacer
+			line_edit.visible = show_editor
 			if value is String:
 				line_edit.text = value
-			line_edit.visible = true
+
 			no_editor_label.visible = false
 
 		"path":
+			spacer.visible = show_spacer
+			line_edit.visible = show_editor
 			if value is String:
 				line_edit.text = value
-			line_edit.visible = true
+
 			no_editor_label.visible = false
 
 		_:
 			line_edit.visible = false
 
-			no_editor_label.visible = true
-			no_editor_label.text = "no editor for type \"" + type + "\""
+			spacer.visible = show_spacer
+			no_editor_label.visible = show_editor
+			no_editor_label.text = "no editor for type \"" + value_type + "\""

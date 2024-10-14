@@ -30,3 +30,8 @@ theme_override_colors/default_color = Color(0.7, 0.7, 0.7, 1)
 bbcode_enabled = true
 text = "no editor for type"
 fit_content = true
+
+[node name="Spacer" type="Control" parent="."]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3

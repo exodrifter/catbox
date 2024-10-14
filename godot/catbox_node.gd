@@ -4,6 +4,7 @@ extends GraphNode
 
 const SLOT = preload("res://catbox_slot.tscn")
 
+var parent_graph: CatboxGraph
 var function: CatboxFunction
 
 var slots: Array[CatboxSlot]
@@ -45,6 +46,15 @@ func _process(_delta: float) -> void:
 	slot_editor.visible = function.variable_inputs || function.variable_outputs
 	slot_editor.variable_inputs = function.variable_inputs
 	slot_editor.variable_outputs = function.variable_outputs
+
+	if name == "in" or name == "out":
+		for slot in slots:
+			slot.hide_editor = true
+	else:
+		for slot in slots:
+			if slot.slot_type == CatboxSlot.SlotType.InputSlot:
+				var p = parent_graph.get_parameter(name + "." + slot.slot_name)
+				slot.hide_editor = p.source.type == "connection"
 
 	reset_size()
 

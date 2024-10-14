@@ -4,14 +4,12 @@
 [ext_resource type="PackedScene" uid="uid://ba33q13l30iab" path="res://catbox_slot_editor.tscn" id="3_jws0e"]
 
 [node name="CatboxNode" type="GraphNode"]
-custom_minimum_size = Vector2(400, 0)
 offset_left = 200.0
 offset_top = 200.0
 offset_right = 600.0
 offset_bottom = 255.0
 mouse_filter = 1
 theme_override_constants/separation = 10
-position_offset = Vector2(200, 200)
 slot/0/left_enabled = false
 slot/0/left_type = 0
 slot/0/left_color = Color(1, 1, 1, 1)

@@ -7,6 +7,12 @@ var outputs: Array[CatboxSignature]
 var nodes: Array[CatboxNode]
 var parameters: Array[CatboxParameter]
 
+func get_parameter(key: String) -> CatboxParameter:
+	for parameter in parameters:
+		if parameter.key == key:
+			return parameter
+	return null
+
 static func from_json(json: String) -> CatboxGraph:
 	return CatboxGraph.from_dict(JSON.parse_string(json))
 

@@ -22,6 +22,7 @@ func _ready() -> void:
 
 	var input_node = CATBOX_GRAPH_NODE.instantiate()
 	input_node.name = "in"
+	input_node.parent_graph = graph
 	input_node.function = input_function
 	for input in graph.inputs:
 		input_node.add_slot(input.name, input.type, CatboxSlot.SlotType.OutputSlot)
@@ -35,6 +36,7 @@ func _ready() -> void:
 
 	var output_node = CATBOX_GRAPH_NODE.instantiate()
 	output_node.name = "out"
+	output_node.parent_graph = graph
 	output_node.function = output_function
 	for output in graph.outputs:
 		output_node.add_slot(output.name, output.type, CatboxSlot.SlotType.InputSlot)
@@ -45,6 +47,7 @@ func _ready() -> void:
 	for n in graph.nodes:
 		var node: CatboxGraphNode = CATBOX_GRAPH_NODE.instantiate()
 		node.name = n.id
+		node.parent_graph = graph
 		node.function = api.get_function(n.function_name)
 		add_child(node)
 		nodes[n.id] = node
