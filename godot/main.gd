@@ -71,6 +71,10 @@ func _ready() -> void:
 						slot.value = param.source.value.value
 						break
 
+	for node in nodes.values():
+		for slot in node.slots:
+			slot.refresh_editor()
+
 	# If we don't wait, the graph ends up being spread out a lot more than it
 	# would be if the user pressed the arrange nodes button.
 	await get_tree().create_timer(0).timeout
@@ -126,10 +130,17 @@ func _on_connection_request(from_node: StringName, from_port: int, to_node: Stri
 	# Create new connection in graph editor
 	connect_node(from_node, from_port, to_node, to_port)
 
+	# Update slot editor state
+	to_slot.refresh_editor()
+	from_slot.refresh_editor()
+
 func _on_disconnection_request(from_node: StringName, from_port: int, to_node: StringName, to_port: int) -> void:
-	# Remove connection from data model
 	var to: CatboxGraphNode = nodes[to_node]
 	var to_slot: CatboxSlot = to.slots[to.get_input_port_slot(to_port)]
+	var from: CatboxGraphNode = nodes[from_node]
+	var from_slot: CatboxSlot = from.slots[from.get_input_port_slot(from_port)]
+
+	# Remove connection from data model
 	var param_to_remove: int = -1
 	for i in graph.parameters.size():
 		var param = graph.parameters[i]
@@ -141,3 +152,7 @@ func _on_disconnection_request(from_node: StringName, from_port: int, to_node: S
 
 	# Remove connection from graph editor
 	disconnect_node(from_node, from_port, to_node, to_port)
+
+	# Update slot editor state
+	to_slot.refresh_editor()
+	from_slot.refresh_editor()

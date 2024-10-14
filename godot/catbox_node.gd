@@ -47,16 +47,6 @@ func _process(_delta: float) -> void:
 	slot_editor.variable_inputs = function.variable_inputs
 	slot_editor.variable_outputs = function.variable_outputs
 
-	if name == "in" or name == "out":
-		for slot in slots:
-			slot.hide_editor = true
-	else:
-		for slot in slots:
-			if slot.slot_type == CatboxSlot.SlotType.InputSlot:
-				var parameter_name = name + "." + slot.slot_name
-				var parameter = parent_graph.get_parameter(parameter_name)
-				slot.hide_editor = parameter != null and parameter.source.type == "connection"
-
 	reset_size()
 
 func add_slot(slot_name: String, value_type: String, slot_type: CatboxSlot.SlotType) -> void:
@@ -66,7 +56,7 @@ func add_slot(slot_name: String, value_type: String, slot_type: CatboxSlot.SlotT
 			return
 
 	var slot: CatboxSlot = SLOT.instantiate()
-	slot.catbox_node = self
+	slot.parent_node = self
 	slot.slot_name = slot_name
 	slot.slot_type = slot_type
 	slot.value_type = value_type
