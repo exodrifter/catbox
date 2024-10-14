@@ -71,6 +71,11 @@ func _ready() -> void:
 						slot.value = param.source.value.value
 						break
 
+	# If we don't wait, the graph ends up being spread out a lot more than it
+	# would be if the user pressed the arrange nodes button.
+	await get_tree().create_timer(0).timeout
+	arrange_nodes()
+
 func resolve_key(key: String, type: CatboxSlot.SlotType) -> Dictionary:
 	var info = key.split(".")
 	var slots: Array[CatboxSlot] = nodes[info[0]].slots
