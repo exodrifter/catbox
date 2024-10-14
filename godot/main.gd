@@ -112,6 +112,7 @@ func _on_connection_request(from_node: StringName, from_port: int, to_node: Stri
 			break
 	if param_to_update == null:
 		param_to_update = CatboxParameter.new()
+		param_to_update.key = to_node + "." + to_slot.slot_name
 		graph.parameters.push_back(param_to_update)
 	param_to_update.source = CatboxSource.new()
 	param_to_update.source.type = "connection"
@@ -124,3 +125,19 @@ func _on_connection_request(from_node: StringName, from_port: int, to_node: Stri
 
 	# Create new connection in graph editor
 	connect_node(from_node, from_port, to_node, to_port)
+
+func _on_disconnection_request(from_node: StringName, from_port: int, to_node: StringName, to_port: int) -> void:
+	# Remove connection from data model
+	var to: CatboxGraphNode = nodes[to_node]
+	var to_slot: CatboxSlot = to.slots[to.get_input_port_slot(to_port)]
+	var param_to_remove: int = -1
+	for i in graph.parameters.size():
+		var param = graph.parameters[i]
+		if param.key == to_node + "." + to_slot.slot_name:
+			param_to_remove = i
+			break
+	if param_to_remove != -1:
+		graph.parameters.remove_at(param_to_remove)
+
+	# Remove connection from graph editor
+	disconnect_node(from_node, from_port, to_node, to_port)
