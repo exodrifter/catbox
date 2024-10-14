@@ -16,11 +16,11 @@ listFilesFunction :: Function
 listFilesFunction =
   Function
     { functionName = "list_files"
-    , functionInputs = Map.fromList
-        [ ("path", TPath)
+    , functionInputs =
+        [ Signature "path" TPath
         ]
-    , functionOutputs = Map.fromList
-        [ ("result", TList)
+    , functionOutputs =
+        [ Signature "result" TList
         ]
     , functionVariableInputs = False
     , functionVariableOutputs = False

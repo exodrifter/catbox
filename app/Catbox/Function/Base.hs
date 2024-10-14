@@ -16,10 +16,10 @@ deconstructFunction :: Function
 deconstructFunction =
   Function
     { functionName = "deconstruct"
-    , functionInputs = Map.fromList
-        [ ("object", TObject)
+    , functionInputs =
+        [ Signature "object" TObject
         ]
-    , functionOutputs = Map.empty
+    , functionOutputs = []
     , functionVariableInputs = False
     , functionVariableOutputs = True
     , ..

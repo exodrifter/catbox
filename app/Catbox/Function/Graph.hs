@@ -19,10 +19,10 @@ execGraphFunction :: Function
 execGraphFunction =
   Function
     { functionName = "exec_graph"
-    , functionInputs = Map.fromList
-        [ ("_graph", TGraph)
+    , functionInputs =
+        [ Signature "_graph" TGraph
         ]
-    , functionOutputs = Map.empty
+    , functionOutputs = []
     , functionVariableInputs = True
     , functionVariableOutputs = True
     , ..
@@ -51,12 +51,12 @@ mapFunction :: Function
 mapFunction =
   Function
     { functionName = "map"
-    , functionInputs = Map.fromList
-        [ ("_graph", TGraph)
-        , ("_input", TText)
-        , ("_list", TList)
+    , functionInputs =
+        [ Signature "_graph" TGraph
+        , Signature "_input" TText
+        , Signature "_list" TList
         ]
-    , functionOutputs = Map.empty
+    , functionOutputs = []
     , functionVariableInputs = True
     , functionVariableOutputs = True
     , ..

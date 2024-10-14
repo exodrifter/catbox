@@ -1,18 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://dkeuavrwa1dik"]
+[gd_scene load_steps=3 format=3 uid="uid://dkeuavrwa1dik"]
 
 [ext_resource type="Script" path="res://catbox_node.gd" id="1_m3ni4"]
-[ext_resource type="Script" path="res://catbox/function.gd" id="2_mpry0"]
 [ext_resource type="PackedScene" uid="uid://ba33q13l30iab" path="res://catbox_slot_editor.tscn" id="3_jws0e"]
-
-[sub_resource type="Resource" id="Resource_qjvkq"]
-script = ExtResource("2_mpry0")
-function = ""
-input_names = Array[String]([])
-input_types = Array[String]([])
-output_names = Array[String]([])
-output_types = Array[String]([])
-variable_inputs = true
-variable_outputs = true
 
 [node name="CatboxNode" type="GraphNode"]
 custom_minimum_size = Vector2(400, 0)
@@ -33,7 +22,6 @@ slot/0/right_color = Color(1, 1, 1, 1)
 slot/0/right_icon = null
 slot/0/draw_stylebox = true
 script = ExtResource("1_m3ni4")
-function = SubResource("Resource_qjvkq")
 
 [node name="CatboxSlotEditor" parent="." instance=ExtResource("3_jws0e")]
 layout_mode = 2

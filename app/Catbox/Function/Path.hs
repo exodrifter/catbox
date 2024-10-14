@@ -18,12 +18,12 @@ changeExtensionFunction :: Function
 changeExtensionFunction =
   Function
     { functionName = "change_extension"
-    , functionInputs = Map.fromList
-        [ ("extension", TText)
-        , ("path", TPath)
+    , functionInputs =
+        [ Signature "extension" TText
+        , Signature "path" TPath
         ]
-    , functionOutputs = Map.fromList
-        [ ("result", TPath)
+    , functionOutputs =
+        [ Signature "result" TPath
         ]
     , functionVariableInputs = False
     , functionVariableOutputs = False

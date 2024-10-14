@@ -39,11 +39,11 @@ parseMarkdownFunction :: Function
 parseMarkdownFunction =
   Function
     { functionName = "parse_markdown"
-    , functionInputs = Map.fromList
-        [ ("text", TText)
+    , functionInputs =
+        [ Signature "text" TText
         ]
-    , functionOutputs = Map.fromList
-        [ ("result", TPandoc)
+    , functionOutputs =
+        [ Signature "result" TPandoc
         ]
     , functionVariableInputs = False
     , functionVariableOutputs = False
@@ -59,11 +59,11 @@ renderHtml5Function :: Function
 renderHtml5Function =
   Function
     { functionName = "render_html5"
-    , functionInputs = Map.fromList
-        [ ("pandoc", TPandoc)
+    , functionInputs =
+        [ Signature "pandoc" TPandoc
         ]
-    , functionOutputs = Map.fromList
-        [ ("result", TText)
+    , functionOutputs =
+        [ Signature "result" TText
         ]
     , functionVariableInputs = False
     , functionVariableOutputs = False
@@ -84,11 +84,13 @@ remapLinkExtension :: Function
 remapLinkExtension =
   Function
     { functionName = "remap_link_extension"
-    , functionInputs = Map.fromList
-        [ ("pandoc", TPandoc)
+    , functionInputs =
+        [ Signature "pandoc" TPandoc
+        , Signature "from" TText
+        , Signature "to" TText
         ]
-    , functionOutputs = Map.fromList
-        [ ("result", TPandoc)
+    , functionOutputs =
+        [ Signature "result" TPandoc
         ]
     , functionVariableInputs = False
     , functionVariableOutputs = False
