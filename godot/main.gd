@@ -97,3 +97,30 @@ func resolve_key(key: String, type: CatboxSlot.SlotType) -> Dictionary:
 		"id": info[0],
 		"port": index,
 	}
+
+func _on_connection_request(from_node: StringName, from_port: int, to_node: StringName, to_port: int) -> void:
+	# Update connection in data model
+	var from: CatboxGraphNode = nodes[from_node]
+	var from_slot: CatboxSlot = from.slots[from.get_input_port_slot(from_port)]
+	var to: CatboxGraphNode = nodes[to_node]
+	var to_slot: CatboxSlot = to.slots[to.get_input_port_slot(to_port)]
+	var param_to_update: CatboxParameter = null
+	for i in graph.parameters.size():
+		var param = graph.parameters[i]
+		if param.key == to_node + "." + to_slot.slot_name:
+			param_to_update = param
+			break
+	if param_to_update == null:
+		param_to_update = CatboxParameter.new()
+		graph.parameters.push_back(param_to_update)
+	param_to_update.source = CatboxSource.new()
+	param_to_update.source.type = "connection"
+	param_to_update.source.value = from_node + "." + from_slot.slot_name
+
+	# Remove old connection from graph editor
+	for c in get_connection_list():
+		if c.to_node == to_node and c.to_port == to_port:
+			disconnect_node(c.from_node, c.from_port, c.to_node, c.to_port)
+
+	# Create new connection in graph editor
+	connect_node(from_node, from_port, to_node, to_port)

@@ -53,8 +53,9 @@ func _process(_delta: float) -> void:
 	else:
 		for slot in slots:
 			if slot.slot_type == CatboxSlot.SlotType.InputSlot:
-				var p = parent_graph.get_parameter(name + "." + slot.slot_name)
-				slot.hide_editor = p.source.type == "connection"
+				var parameter_name = name + "." + slot.slot_name
+				var parameter = parent_graph.get_parameter(parameter_name)
+				slot.hide_editor = parameter.source.type == "connection"
 
 	reset_size()
 
