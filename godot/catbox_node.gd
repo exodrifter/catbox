@@ -11,28 +11,9 @@ var slots: Array[CatboxSlot]
 @onready var slot_editor: HBoxContainer = $CatboxSlotEditor
 
 func _enter_tree() -> void:
-	if is_instance_valid(function):
-		setup()
+	if not is_instance_valid(function):
+		return
 
-func _process(_delta: float) -> void:
-	for i in slots.size():
-		var slot = slots[i]
-		match slot.slot_type:
-			CatboxSlot.SlotType.InputSlot:
-				set_slot_enabled_left(i, true)
-				set_slot_enabled_right(i, false)
-			CatboxSlot.SlotType.OutputSlot:
-				set_slot_enabled_left(i, false)
-				set_slot_enabled_right(i, true)
-
-	move_child(slot_editor, -1)
-	slot_editor.visible = function.variable_inputs || function.variable_outputs
-	slot_editor.variable_inputs = function.variable_inputs
-	slot_editor.variable_outputs = function.variable_outputs
-
-	reset_size()
-
-func setup():
 	title = function.function_name
 
 	for input in function.inputs:
@@ -49,6 +30,24 @@ func setup():
 			CatboxSlot.SlotType.OutputSlot
 		)
 
+	for i in slots.size():
+		var slot = slots[i]
+		match slot.slot_type:
+			CatboxSlot.SlotType.InputSlot:
+				set_slot_enabled_left(i, true)
+				set_slot_enabled_right(i, false)
+			CatboxSlot.SlotType.OutputSlot:
+				set_slot_enabled_left(i, false)
+				set_slot_enabled_right(i, true)
+
+func _process(_delta: float) -> void:
+	move_child(slot_editor, -1)
+	slot_editor.visible = function.variable_inputs || function.variable_outputs
+	slot_editor.variable_inputs = function.variable_inputs
+	slot_editor.variable_outputs = function.variable_outputs
+
+	reset_size()
+
 func add_slot(slot_name: String, value_type: String, slot_type: CatboxSlot.SlotType) -> void:
 	# Don't create duplicate slots
 	for slot in slots:
@@ -60,5 +59,14 @@ func add_slot(slot_name: String, value_type: String, slot_type: CatboxSlot.SlotT
 	slot.slot_name = slot_name
 	slot.slot_type = slot_type
 	slot.value_type = value_type
-	slots.push_back(slot)
 	add_child(slot)
+
+	var i = slots.size()
+	slots.push_back(slot)
+	match slot_type:
+		CatboxSlot.SlotType.InputSlot:
+			set_slot_enabled_left(i, true)
+			set_slot_enabled_right(i, false)
+		CatboxSlot.SlotType.OutputSlot:
+			set_slot_enabled_left(i, false)
+			set_slot_enabled_right(i, true)
