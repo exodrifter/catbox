@@ -53,6 +53,7 @@ executable catbox
       mtl ^>= 2.3.1,
       optparse-applicative,
       pandoc,
+      prettyprinter,
       text,
 
     mixins:

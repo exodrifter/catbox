@@ -13,19 +13,35 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified System.Directory as Directory
 import qualified System.FilePath as FilePath
+import qualified Prettyprinter
 
 main :: IO ()
 main = do
   let
     opts = info (catboxParser <**> helper)
       ( fullDesc
-     <> progDesc "Process a set of documents using a catbox graph."
-     <> header "catbox - document transformation application" )
+     <> progDescDoc (Just (catboxAscii <> "Process a set of documents using a catbox graph."))
+     <> header "catbox - document transformation application"
+      )
 
   cmd <- execParser opts
   case cmd of
     ApiCommand () -> doApiCommand
     GraphCommand opt -> doGraphCommand opt
+
+catboxAscii :: Prettyprinter.Doc a
+catboxAscii =
+  "  ,-.       _,---._ __  / \\  " <> Prettyprinter.hardline <>
+  " /  )    .-'       `./ /   \\ " <> Prettyprinter.hardline <>
+  "(  (   ,'            `/    /|" <> Prettyprinter.hardline <>
+  " \\  `-\"             \\'\\   / |" <> Prettyprinter.hardline <>
+  "  `.              ,  \\ \\ /  |" <> Prettyprinter.hardline <>
+  "   /`x          ,'-`----Y   |" <> Prettyprinter.hardline <>
+  "  (            ;        |   '" <> Prettyprinter.hardline <>
+  "  |  ,-.    ,-'         |  / " <> Prettyprinter.hardline <>
+  "  |  | (   |            | /  " <> Prettyprinter.hardline <>
+  "  )  |  \\  `.___________|/   " <> Prettyprinter.hardline <>
+  "  `--'   `--'                " <> Prettyprinter.hardline
 
 doApiCommand :: IO ()
 doApiCommand = do
